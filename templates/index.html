@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gerenciamento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+        .select2-selection {
+            height: auto !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Sistema de Gerenciamento</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Registrar Diária</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cadastros">Cadastros</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Nova Diária</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="diariaForm">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Data e Hora de Início</label>
+                                        <input type="datetime-local" class="form-control" name="data_inicio" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Data e Hora de Fim</label>
+                                        <input type="datetime-local" class="form-control" name="data_fim" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Empresa</label>
+                                        <select class="form-select" name="empresa" required>
+                                            <option value="">Selecione uma empresa</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Entregador</label>
+                                        <select class="form-select" name="entregador" required>
+                                            <option value="">Selecione um entregador</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="adicionarDiariaTemporaria()">
+                                        Adicionar Diária
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Diárias Temporárias</h2>
+                    <button type="button" class="btn btn-success" onclick="enviarEscala()" id="btnEnviarEscala" disabled>
+                        Enviar Escala
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="tabelaDiariasTemp">
+                        <thead>
+                            <tr>
+                                <th>Data e Hora de Início</th>
+                                <th>Data e Hora de Fim</th>
+                                <th>Empresa</th>
+                                <th>Entregador</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Diárias Registradas</h2>
+                    <button type="button" class="btn btn-success" onclick="abrirModalExportar()">
+                        Exportar Diárias
+                    </button>
+                </div>
+                
+                <!-- Filtros -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Empresa</label>
+                                    <select class="form-select" id="filtroEmpresa">
+                                        <option value="">Todas as empresas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Data Inicial</label>
+                                    <input type="date" class="form-control" id="filtroDataInicial">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Data Final</label>
+                                    <input type="date" class="form-control" id="filtroDataFinal">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary" onclick="aplicarFiltros()">
+                                    Aplicar Filtros
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="limparFiltros()">
+                                    Limpar Filtros
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped" id="tabelaDiarias">
+                        <thead>
+                            <tr>
+                                <th>Data e Hora de Início</th>
+                                <th>Data e Hora de Fim</th>
+                                <th>Empresa</th>
+                                <th>Tipo Veículo</th>
+                                <th>Entregador</th>
+                                <th>CPF</th>
+                                <th>Taxa Total Cobrada</th>
+                                <th>Taxa Total Entregador</th>
+                                <th>Mínimo Garantido</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Exportar Diárias -->
+    <div class="modal fade" id="exportarModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Exportar Diárias</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="exportarForm">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Selecione as Empresas</label>
+                                <select class="form-select" id="exportarEmpresas" multiple>
+                                    <option value="todas">Todas as empresas</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Data Inicial</label>
+                                    <input type="date" class="form-control" name="data_inicial" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Data Final</label>
+                                    <input type="date" class="form-control" name="data_final" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" onclick="exportarDiarias()">Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        // Array para armazenar as diárias temporárias
+        let diariasTemporarias = [];
+
+        function carregarDados() {
+            carregarEmpresas();
+            carregarEntregadores();
+            carregarDiarias();
+            carregarFiltroEmpresas();
+        }
+
+        function carregarEmpresas() {
+            fetch('/api/empresas')
+                .then(response => response.json())
+                .then(data => {
+                    const select = $('select[name="empresa"]');
+                    select.empty();
+                    select.append(new Option('Selecione uma empresa', ''));
+                    data.forEach(empresa => {
+                        select.append(new Option(empresa.nome, empresa.nome));
+                    });
+                });
+        }
+
+        function carregarEntregadores() {
+            fetch('/api/entregadores')
+                .then(response => response.json())
+                .then(data => {
+                    const select = $('select[name="entregador"]');
+                    select.empty();
+                    select.append(new Option('Selecione um entregador', ''));
+                    data.forEach(entregador => {
+                        select.append(new Option(entregador.nome, entregador.nome));
+                    });
+                });
+        }
+
+        function carregarFiltroEmpresas() {
+            fetch('/api/empresas')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('filtroEmpresa');
+                    select.innerHTML = '<option value="">Todas as empresas</option>';
+                    data.forEach(empresa => {
+                        select.innerHTML += `<option value="${empresa.nome}">${empresa.nome}</option>`;
+                    });
+                });
+        }
+
+        let todasDiarias = []; // Variável global para armazenar todas as diárias
+
+        function carregarDiarias() {
+            fetch('/api/diarias')
+                .then(response => {
+                    console.log('Status da resposta:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dados recebidos:', data);
+                    todasDiarias = data; // Armazena todas as diárias
+                    atualizarTabelaDiarias(data); // Atualiza a tabela com todas as diárias
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar diárias:', error);
+                    const tbody = document.querySelector('#tabelaDiarias tbody');
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Erro ao carregar diárias</td></tr>';
+                });
+        }
+
+        function atualizarTabelaDiarias(diarias) {
+            const tbody = document.querySelector('#tabelaDiarias tbody');
+            tbody.innerHTML = '';
+            
+            if (diarias && diarias.length > 0) {
+                // Ordena as diárias por data e hora de início
+                const diariasOrdenadas = [...diarias].sort((a, b) => {
+                    const dataA = new Date(a['Data e hora de início']);
+                    const dataB = new Date(b['Data e hora de início']);
+                    return dataA - dataB;
+                });
+
+                diariasOrdenadas.forEach(diaria => {
+                    try {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${formatarDataHora(diaria['Data e hora de início'] || '')}</td>
+                            <td>${formatarDataHora(diaria['Data e hora de fim'] || '')}</td>
+                            <td>${diaria['Empresa'] || ''}</td>
+                            <td>${diaria['Tipo Veiculo'] || ''}</td>
+                            <td>${diaria['Entregador'] || ''}</td>
+                            <td>${diaria['CPF'] || ''}</td>
+                            <td>R$ ${typeof diaria['Taxa total cobrada'] === 'number' ? diaria['Taxa total cobrada'].toFixed(2) : '0.00'}</td>
+                            <td>R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
+                            <td>${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    } catch (err) {
+                        console.error('Erro ao processar diária:', err, diaria);
+                    }
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Nenhuma diária encontrada</td></tr>';
+            }
+        }
+
+        function adicionarDiariaTemporaria() {
+            const form = document.getElementById('diariaForm');
+            const formData = new FormData(form);
+            
+            // Busca as informações da empresa selecionada
+            fetch('/api/empresas')
+                .then(response => response.json())
+                .then(empresas => {
+                    const empresa = empresas.find(e => e.nome === formData.get('empresa'));
+                    if (!empresa) {
+                        alert('Empresa não encontrada');
+                        return;
+                    }
+
+                    const diaria = {
+                        data_inicio: formData.get('data_inicio'),
+                        data_fim: formData.get('data_fim'),
+                        empresa: formData.get('empresa'),
+                        entregador: formData.get('entregador'),
+                        veiculo: empresa.veiculo // Adiciona o veículo da empresa
+                    };
+
+                    // Validação básica
+                    if (!diaria.data_inicio || !diaria.data_fim || !diaria.empresa || !diaria.entregador) {
+                        alert('Por favor, preencha todos os campos.');
+                        return;
+                    }
+
+                    // Adiciona a diária ao array temporário
+                    diariasTemporarias.push(diaria);
+                    
+                    // Atualiza a tabela de diárias temporárias
+                    atualizarTabelaTemporaria();
+                    
+                    // Limpa o formulário
+                    form.reset();
+                    
+                    // Habilita o botão de enviar escala
+                    document.getElementById('btnEnviarEscala').disabled = false;
+                });
+        }
+
+        function atualizarTabelaTemporaria() {
+            const tbody = document.querySelector('#tabelaDiariasTemp tbody');
+            tbody.innerHTML = '';
+            
+            // Ordena as diárias por data e hora de início
+            const diariasOrdenadas = [...diariasTemporarias].sort((a, b) => {
+                return new Date(a.data_inicio) - new Date(b.data_inicio);
+            });
+            
+            diariasOrdenadas.forEach((diaria, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatarDataHora(diaria.data_inicio)}</td>
+                    <td>${formatarDataHora(diaria.data_fim)}</td>
+                    <td>${diaria.empresa}</td>
+                    <td>${diaria.entregador}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="removerDiariaTemporaria(${index})">
+                            Remover
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatarDataHora(dataHora) {
+            if (!dataHora) return '';
+            try {
+                return new Date(dataHora).toLocaleString('pt-BR');
+            } catch (err) {
+                console.error('Erro ao formatar data:', err, dataHora);
+                return dataHora;
+            }
+        }
+
+        function removerDiariaTemporaria(index) {
+            diariasTemporarias.splice(index, 1);
+            atualizarTabelaTemporaria();
+            
+            // Desabilita o botão de enviar escala se não houver mais diárias temporárias
+            if (diariasTemporarias.length === 0) {
+                document.getElementById('btnEnviarEscala').disabled = true;
+            }
+        }
+
+        function enviarEscala() {
+            // Envia todas as diárias temporárias para o servidor
+            const promises = diariasTemporarias.map(diaria => {
+                return fetch('/api/diaria', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(diaria)
+                });
+            });
+
+            Promise.all(promises)
+                .then(() => {
+                    // Limpa as diárias temporárias
+                    diariasTemporarias = [];
+                    atualizarTabelaTemporaria();
+                    
+                    // Desabilita o botão de enviar escala
+                    document.getElementById('btnEnviarEscala').disabled = true;
+                    
+                    // Recarrega a tabela de diárias registradas
+                    setTimeout(() => {
+                        carregarDiarias();
+                    }, 500); // Pequeno delay para garantir que o servidor processou os dados
+                    
+                    alert('Escala enviada com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar escala:', error);
+                    alert('Erro ao enviar escala. Por favor, tente novamente.');
+                });
+        }
+
+        function abrirModalExportar() {
+            // Define a data atual como valor máximo para os campos de data
+            const hoje = new Date().toISOString().split('T')[0];
+            document.querySelector('input[name="data_inicial"]').max = hoje;
+            document.querySelector('input[name="data_final"]').max = hoje;
+            
+            // Carrega a lista de empresas
+            fetch('/api/empresas')
+                .then(response => response.json())
+                .then(data => {
+                    const select = $('#exportarEmpresas');
+                    select.empty();
+                    select.append(new Option('Todas as empresas', 'todas'));
+                    data.forEach(empresa => {
+                        select.append(new Option(empresa.nome, empresa.nome));
+                    });
+
+                    // Inicializa o Select2
+                    select.select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Selecione uma ou mais empresas',
+                        allowClear: true,
+                        language: {
+                            noResults: () => 'Nenhuma empresa encontrada',
+                            searching: () => 'Pesquisando...'
+                        }
+                    }).val(null).trigger('change');
+
+                    // Configura o evento de mudança
+                    select.on('change', function() {
+                        const valores = $(this).val() || [];
+                        if (valores.includes('todas')) {
+                            // Se "Todas as empresas" foi selecionada, desmarca as outras opções
+                            $(this).val(['todas']).trigger('change');
+                        } else if (valores.length === 0) {
+                            // Se nenhuma empresa está selecionada, seleciona "Todas as empresas"
+                            $(this).val(['todas']).trigger('change');
+                        }
+                    });
+                });
+            
+            // Abre o modal
+            new bootstrap.Modal(document.getElementById('exportarModal')).show();
+        }
+
+        function exportarDiarias() {
+            const form = document.getElementById('exportarForm');
+            const formData = new FormData(form);
+            const dataInicial = formData.get('data_inicial');
+            const dataFinal = formData.get('data_final');
+            
+            // Obtém as empresas selecionadas
+            const empresasSelecionadas = $('#exportarEmpresas').val() || [];
+
+            // Validação básica
+            if (!dataInicial || !dataFinal) {
+                alert('Por favor, preencha as datas inicial e final.');
+                return;
+            }
+
+            if (dataInicial > dataFinal) {
+                alert('A data inicial não pode ser maior que a data final.');
+                return;
+            }
+
+            // Constrói a URL com os parâmetros
+            let url = `/api/exportar?data_inicial=${dataInicial}&data_final=${dataFinal}`;
+            
+            // Se não for "todas", adiciona as empresas selecionadas
+            if (!empresasSelecionadas.includes('todas')) {
+                if (empresasSelecionadas.length === 0) {
+                    alert('Por favor, selecione pelo menos uma empresa.');
+                    return;
+                }
+                url += `&empresas=${empresasSelecionadas.join(',')}`;
+            }
+
+            // Faz o download do arquivo
+            window.location.href = url;
+            
+            // Fecha o modal
+            bootstrap.Modal.getInstance(document.getElementById('exportarModal')).hide();
+            form.reset();
+            $('#exportarEmpresas').val(null).trigger('change');
+        }
+
+        function aplicarFiltros() {
+            const empresa = document.getElementById('filtroEmpresa').value;
+            const dataInicial = document.getElementById('filtroDataInicial').value;
+            const dataFinal = document.getElementById('filtroDataFinal').value;
+
+            let diariasFiltradas = [...todasDiarias];
+
+            // Filtra por empresa
+            if (empresa) {
+                diariasFiltradas = diariasFiltradas.filter(diaria => 
+                    diaria['Empresa'] === empresa
+                );
+            }
+
+            // Filtra por período
+            if (dataInicial) {
+                diariasFiltradas = diariasFiltradas.filter(diaria => {
+                    const dataInicioDiaria = diaria['Data e hora de início'].split(' ')[0];
+                    return dataInicioDiaria >= dataInicial;
+                });
+            }
+
+            if (dataFinal) {
+                diariasFiltradas = diariasFiltradas.filter(diaria => {
+                    const dataInicioDiaria = diaria['Data e hora de início'].split(' ')[0];
+                    return dataInicioDiaria <= dataFinal;
+                });
+            }
+
+            atualizarTabelaDiarias(diariasFiltradas);
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtroEmpresa').value = '';
+            document.getElementById('filtroDataInicial').value = '';
+            document.getElementById('filtroDataFinal').value = '';
+            atualizarTabelaDiarias(todasDiarias);
+        }
+
+        // Carrega os dados quando a página é carregada
+        document.addEventListener('DOMContentLoaded', carregarDados);
+    </script>
+</body>
+</html> 
