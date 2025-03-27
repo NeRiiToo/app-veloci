@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash
 import pandas as pd
 from datetime import datetime
 import os
@@ -35,14 +35,32 @@ def admin_required(f):
 def carregar_usuarios():
     if os.path.exists(USUARIOS_FILE):
         with open(USUARIOS_FILE, 'r', encoding='utf-8') as f:
-            return list(csv.DictReader(f))
+            usuarios = list(csv.DictReader(f))
+            # Converte a string de empresas em lista
+            for usuario in usuarios:
+                if 'empresas_vinculadas' in usuario:
+                    if usuario['empresas_vinculadas']:
+                        usuario['empresas_vinculadas'] = usuario['empresas_vinculadas'].split('|')
+                    else:
+                        usuario['empresas_vinculadas'] = []
+                else:
+                    usuario['empresas_vinculadas'] = []
+            return usuarios
     return []
 
 def salvar_usuarios(usuarios):
+    # Converte a lista de empresas em string
+    usuarios_para_salvar = []
+    for usuario in usuarios:
+        usuario_copy = usuario.copy()
+        if 'empresas_vinculadas' in usuario_copy:
+            usuario_copy['empresas_vinculadas'] = '|'.join(usuario_copy['empresas_vinculadas'])
+        usuarios_para_salvar.append(usuario_copy)
+
     with open(USUARIOS_FILE, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=['username', 'senha', 'permissao'])
+        writer = csv.DictWriter(f, fieldnames=['username', 'senha', 'permissao', 'empresas_vinculadas'])
         writer.writeheader()
-        writer.writerows(usuarios)
+        writer.writerows(usuarios_para_salvar)
 
 def carregar_empresas():
     if os.path.exists(EMPRESAS_FILE):
@@ -120,83 +138,132 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/cadastro_usuario', methods=['GET', 'POST'])
-@admin_required
 def cadastro_usuario():
+    if not session.get('username'):
+        return redirect(url_for('login'))
+    
+    if session.get('permissao') != 'ADM':
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
         username = request.form.get('username')
         senha = request.form.get('senha')
         permissao = request.form.get('permissao')
-        
-        if permissao not in ['ADM', 'supervisor']:
-            return render_template('cadastro_usuario.html', error='Permissão inválida', usuarios=carregar_usuarios(), permissao=session.get('permissao'))
-        
-        usuarios = carregar_usuarios()
-        if any(u['username'] == username for u in usuarios):
-            return render_template('cadastro_usuario.html', error='Usuário já existe', usuarios=usuarios, permissao=session.get('permissao'))
-        
-        usuarios.append({
-            'username': username,
-            'senha': senha,
-            'permissao': permissao
-        })
-        salvar_usuarios(usuarios)
-        return redirect(url_for('cadastro_usuario'))
-    
-    return render_template('cadastro_usuario.html', usuarios=carregar_usuarios(), permissao=session.get('permissao'))
+        empresas_vinculadas = request.form.getlist('empresas_vinculadas[]')
 
-@app.route('/editar_usuario', methods=['POST'])
-@admin_required
-def editar_usuario():
-    username_original = request.form.get('username_original')
-    username = request.form.get('username')
-    senha = request.form.get('senha')
-    permissao = request.form.get('permissao')
-    
-    if not username or not permissao:
-        return jsonify({'success': False, 'error': 'Campos obrigatórios não preenchidos'})
-    
-    if permissao not in ['ADM', 'supervisor']:
-        return jsonify({'success': False, 'error': 'Permissão inválida'})
-    
-    usuarios = carregar_usuarios()
-    
-    # Verifica se o novo username já existe (exceto para o próprio usuário)
-    if any(u['username'] == username and u['username'] != username_original for u in usuarios):
-        return jsonify({'success': False, 'error': 'Nome de usuário já existe'})
-    
-    # Atualiza o usuário
-    for usuario in usuarios:
-        if usuario['username'] == username_original:
-            usuario['username'] = username
-            if senha:  # Só atualiza a senha se foi fornecida
-                usuario['senha'] = senha
-            usuario['permissao'] = permissao
-            break
-    
-    salvar_usuarios(usuarios)
-    return jsonify({'success': True})
+        if not username or not senha or not permissao:
+            return jsonify({'success': False, 'error': 'Todos os campos são obrigatórios'})
+
+        try:
+            df = pd.read_csv(USUARIOS_FILE)
+            if username in df['username'].values:
+                return jsonify({'success': False, 'error': 'Nome de usuário já existe'})
+
+            novo_usuario = {
+                'username': username,
+                'senha': senha,
+                'permissao': permissao,
+                'empresas_vinculadas': '|'.join(empresas_vinculadas) if empresas_vinculadas else ''
+            }
+
+            df = pd.concat([df, pd.DataFrame([novo_usuario])], ignore_index=True)
+            df.to_csv(USUARIOS_FILE, index=False)
+            return jsonify({'success': True})
+
+        except Exception as e:
+            print(f"Erro ao cadastrar usuário: {str(e)}")
+            return jsonify({'success': False, 'error': 'Erro ao cadastrar usuário'})
+
+    try:
+        usuarios = pd.read_csv(USUARIOS_FILE)
+        usuarios = usuarios.fillna('')
+        usuarios_list = []
+        
+        # Processa cada usuário para converter a string de empresas em lista
+        for _, row in usuarios.iterrows():
+            usuario = row.to_dict()
+            if usuario['empresas_vinculadas'] and isinstance(usuario['empresas_vinculadas'], str):
+                usuario['empresas_vinculadas'] = usuario['empresas_vinculadas'].split('|')
+            else:
+                usuario['empresas_vinculadas'] = []
+            usuarios_list.append(usuario)
+        
+        # Carrega apenas empresas ativas
+        empresas = pd.read_csv(EMPRESAS_FILE)
+        empresas = empresas[empresas['status'] == 'ativo']
+        empresas_list = empresas['nome'].tolist()
+
+        return render_template('cadastro_usuario.html', 
+                             usuarios=usuarios_list, 
+                             empresas=empresas_list, 
+                             permissao=session.get('permissao'))
+    except Exception as e:
+        print(f"Erro ao carregar dados: {str(e)}")
+        return redirect(url_for('index'))
 
 @app.route('/excluir_usuario', methods=['POST'])
-@admin_required
 def excluir_usuario():
-    data = request.get_json()
-    username = data.get('username')
-    
-    if not username:
-        return jsonify({'success': False, 'error': 'Usuário não especificado'})
-    
-    usuarios = carregar_usuarios()
-    
-    # Não permite excluir o último usuário ADM
-    if any(u['username'] == username and u['permissao'] == 'ADM' for u in usuarios):
-        adm_count = sum(1 for u in usuarios if u['permissao'] == 'ADM')
-        if adm_count <= 1:
-            return jsonify({'success': False, 'error': 'Não é possível excluir o último usuário administrador'})
-    
-    # Remove o usuário
-    usuarios = [u for u in usuarios if u['username'] != username]
-    salvar_usuarios(usuarios)
-    return jsonify({'success': True})
+    if not session.get('username') or session.get('permissao') != 'ADM':
+        return jsonify({'success': False, 'error': 'Acesso negado'})
+
+    try:
+        data = request.get_json()
+        username = data.get('username')
+
+        if not username:
+            return jsonify({'success': False, 'error': 'Username não fornecido'})
+
+        df = pd.read_csv(USUARIOS_FILE)
+        
+        # Não permitir excluir o último administrador
+        if username in df[df['permissao'] == 'ADM']['username'].values:
+            adm_count = len(df[df['permissao'] == 'ADM'])
+            if adm_count <= 1:
+                return jsonify({'success': False, 'error': 'Não é possível excluir o último administrador'})
+
+        df = df[df['username'] != username]
+        df.to_csv(USUARIOS_FILE, index=False)
+        return jsonify({'success': True})
+
+    except Exception as e:
+        print(f"Erro ao excluir usuário: {str(e)}")
+        return jsonify({'success': False, 'error': 'Erro ao excluir usuário'})
+
+@app.route('/editar_usuario', methods=['POST'])
+def editar_usuario():
+    if not session.get('username') or session.get('permissao') != 'ADM':
+        return jsonify({'success': False, 'error': 'Acesso negado'})
+
+    try:
+        username = request.form.get('username')
+        nova_senha = request.form.get('senha')
+        nova_permissao = request.form.get('permissao')
+        empresas_vinculadas = request.form.getlist('empresas_vinculadas[]')
+
+        if not username or not nova_permissao:
+            return jsonify({'success': False, 'error': 'Dados incompletos'})
+
+        df = pd.read_csv(USUARIOS_FILE)
+        
+        # Verificar se é o último administrador tentando mudar sua própria permissão
+        if username in df[df['permissao'] == 'ADM']['username'].values:
+            adm_count = len(df[df['permissao'] == 'ADM'])
+            if adm_count <= 1 and nova_permissao != 'ADM':
+                return jsonify({'success': False, 'error': 'Não é possível alterar a permissão do último administrador'})
+
+        # Atualizar os dados do usuário
+        mask = df['username'] == username
+        df.loc[mask, 'permissao'] = nova_permissao
+        if nova_senha:
+            df.loc[mask, 'senha'] = nova_senha
+        df.loc[mask, 'empresas_vinculadas'] = '|'.join(empresas_vinculadas) if empresas_vinculadas else ''
+
+        df.to_csv(USUARIOS_FILE, index=False)
+        return jsonify({'success': True})
+
+    except Exception as e:
+        print(f"Erro ao editar usuário: {str(e)}")
+        return jsonify({'success': False, 'error': 'Erro ao editar usuário'})
 
 def carregar_dados():
     try:
@@ -449,6 +516,14 @@ def api_empresas_ativas():
         df = pd.DataFrame(carregar_empresas())
         # Filtra apenas registros ativos
         df = df[df['status'] == 'ativo']
+        
+        # Se o usuário for supervisor, filtra apenas as empresas vinculadas
+        if session.get('permissao') == 'supervisor':
+            usuarios = carregar_usuarios()
+            usuario_atual = next((u for u in usuarios if u['username'] == session.get('username')), None)
+            if usuario_atual and usuario_atual['empresas_vinculadas']:
+                df = df[df['nome'].isin(usuario_atual['empresas_vinculadas'])]
+        
         empresas = df.to_dict('records')
         print("Empresas ativas encontradas:", len(empresas))  # Log para debug
         return jsonify(empresas)

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Usuário - Sistema de Gerenciamento</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Adiciona CSS do Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         body {
             background-color: #f8f9fa;
@@ -16,6 +19,10 @@
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        /* Estilo para o Select2 */
+        .select2-container {
+            width: 100% !important;
         }
     </style>
 </head>
@@ -90,6 +97,19 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Empresas Vinculadas</label>
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarTodasEmpresas()">Selecionar Todas</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoEmpresas()">Limpar Seleção</button>
+                            </div>
+                            <select class="form-select empresas-select" name="empresas_vinculadas[]" multiple>
+                                {% for empresa in empresas %}
+                                    <option value="{{ empresa }}">{{ empresa }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Você pode digitar para buscar empresas específicas</small>
+                        </div>
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">Cadastrar</button>
                         </div>
@@ -109,6 +129,7 @@
                                 <tr>
                                     <th>Usuário</th>
                                     <th>Permissão</th>
+                                    <th>Empresas Vinculadas</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
@@ -118,12 +139,29 @@
                                     <td>{{ usuario.username }}</td>
                                     <td>{{ usuario.permissao }}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('{{ usuario.username }}', '{{ usuario.permissao }}')">
+                                        {% if usuario.permissao == 'supervisor' %}
+                                            {% if usuario.empresas_vinculadas %}
+                                                {{ usuario.empresas_vinculadas|join(', ') }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary"
+                                            data-username="{{ usuario.username }}"
+                                            data-permissao="{{ usuario.permissao }}"
+                                            data-empresas="{{ usuario.empresas_vinculadas|default([])|tojson|safe }}"
+                                            onclick="editarUsuarioFromButton(this)">
                                             Editar
                                         </button>
-                                        <button class="btn btn-sm btn-danger" onclick="confirmarExclusao('{{ usuario.username }}')">
+                                        {% if usuario.permissao != 'ADM' or usuarios|selectattr('permissao', 'equalto', 'ADM')|list|length > 1 %}
+                                        <button class="btn btn-sm btn-danger" onclick="excluirUsuario('{{ usuario.username }}')">
                                             Excluir
                                         </button>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -145,10 +183,9 @@
                 </div>
                 <div class="modal-body">
                     <form id="formEditar" method="POST">
-                        <input type="hidden" id="edit_username_original" name="username_original">
                         <div class="mb-3">
-                            <label for="edit_username" class="form-label">Novo Usuário</label>
-                            <input type="text" class="form-control" id="edit_username" name="username" required>
+                            <label for="edit_username" class="form-label">Usuário</label>
+                            <input type="text" class="form-control" id="edit_username" name="username" readonly>
                         </div>
                         <div class="mb-3">
                             <label for="edit_senha" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
@@ -161,6 +198,19 @@
                                 <option value="supervisor">Supervisor</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Empresas Vinculadas</label>
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarTodasEmpresasModal()">Selecionar Todas</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoEmpresasModal()">Limpar Seleção</button>
+                            </div>
+                            <select class="form-select empresas-select-modal" name="empresas_vinculadas[]" multiple>
+                                {% for empresa in empresas %}
+                                    <option value="{{ empresa }}">{{ empresa }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Você pode digitar para buscar empresas específicas</small>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -172,18 +222,115 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Adiciona jQuery (necessário para o Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Adiciona Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         let modalEditar;
 
         document.addEventListener('DOMContentLoaded', function() {
             modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+
+            // Inicializa o Select2 para o formulário de cadastro
+            $('.empresas-select').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Selecione as empresas',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "Nenhuma empresa encontrada";
+                    }
+                }
+            });
+
+            // Inicializa o Select2 para o modal de edição
+            $('.empresas-select-modal').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Selecione as empresas',
+                allowClear: true,
+                dropdownParent: $('#modalEditar'),
+                language: {
+                    noResults: function() {
+                        return "Nenhuma empresa encontrada";
+                    }
+                }
+            });
+
+            // Formulário de cadastro
+            const formCadastro = document.getElementById('formCadastro');
+            if (formCadastro) {
+                formCadastro.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(formCadastro);
+                    
+                    fetch('/cadastro_usuario', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Erro ao cadastrar usuário');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Erro ao cadastrar usuário');
+                    });
+                });
+            }
         });
 
-        function abrirModalEditar(username, permissao) {
-            document.getElementById('edit_username_original').value = username;
-            document.getElementById('edit_username').value = username;
-            document.getElementById('edit_permissao').value = permissao;
-            document.getElementById('edit_senha').value = '';
+        function selecionarTodasEmpresas() {
+            const empresasSelect = $('.empresas-select');
+            const todasOpcoes = [];
+            empresasSelect.find('option').each(function() {
+                todasOpcoes.push($(this).val());
+            });
+            empresasSelect.val(todasOpcoes).trigger('change');
+        }
+
+        function limparSelecaoEmpresas() {
+            $('.empresas-select').val(null).trigger('change');
+        }
+
+        function selecionarTodasEmpresasModal() {
+            const empresasSelect = $('.empresas-select-modal');
+            const todasOpcoes = [];
+            empresasSelect.find('option').each(function() {
+                todasOpcoes.push($(this).val());
+            });
+            empresasSelect.val(todasOpcoes).trigger('change');
+        }
+
+        function limparSelecaoEmpresasModal() {
+            $('.empresas-select-modal').val(null).trigger('change');
+        }
+
+        function editarUsuarioFromButton(button) {
+            const username = button.dataset.username;
+            const permissao = button.dataset.permissao;
+            let empresas = [];
+            
+            try {
+                empresas = JSON.parse(button.dataset.empresas || '[]');
+            } catch (e) {
+                console.error('Erro ao processar empresas:', e);
+            }
+            
+            // Preenche os campos do modal
+            document.querySelector('#edit_username').value = username;
+            document.querySelector('#edit_senha').value = '';
+            document.querySelector('#edit_permissao').value = permissao;
+            
+            // Seleciona as empresas vinculadas no Select2 do modal
+            $('.empresas-select-modal').val(empresas).trigger('change');
+            
+            // Abre o modal
             modalEditar.show();
         }
 
@@ -198,7 +345,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.reload();
+                    location.reload();
                 } else {
                     alert(data.error || 'Erro ao editar usuário');
                 }
@@ -209,8 +356,8 @@
             });
         }
 
-        function confirmarExclusao(username) {
-            if (confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
+        function excluirUsuario(username) {
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
                 fetch('/excluir_usuario', {
                     method: 'POST',
                     headers: {
@@ -221,7 +368,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.reload();
+                        location.reload();
                     } else {
                         alert(data.error || 'Erro ao excluir usuário');
                     }

@@ -1,6 +1,4 @@
-username,senha,permissao
-admin,admin123,ADM
-supervisor,supervisor123,supervisor 
-Moab,123456,ADM
-Ewerton,1234,supervisor
-Danilo Rebouças,1234,supervisor
+username,senha,permissao,empresas_vinculadas
+admin,admin123,ADM,
+supervisor,1245,supervisor,
+Moab,123456,ADM,
