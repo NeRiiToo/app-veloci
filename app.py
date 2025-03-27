@@ -1,42 +1,235 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session
 import pandas as pd
 from datetime import datetime
 import os
 import io
+import csv
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = 'sua_chave_secreta_aqui'  # Necessário para sessões
 
 # Configuração dos arquivos de dados
-DADOS_FILE = 'dados.csv'
+EMPRESAS_FILE = 'empresas.csv'
+ENTREGADORES_FILE = 'entregadores.csv'
 ESCALA_FILE = 'modelo escala.xlsx'
 DIARIAS_FILE = 'diarias.xlsx'
+USUARIOS_FILE = 'usuarios.csv'
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session or session['permissao'] != 'ADM':
+            return jsonify({'error': 'Acesso não autorizado'}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def carregar_usuarios():
+    if os.path.exists(USUARIOS_FILE):
+        with open(USUARIOS_FILE, 'r', encoding='utf-8') as f:
+            return list(csv.DictReader(f))
+    return []
+
+def salvar_usuarios(usuarios):
+    with open(USUARIOS_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['username', 'senha', 'permissao'])
+        writer.writeheader()
+        writer.writerows(usuarios)
+
+def carregar_empresas():
+    if os.path.exists(EMPRESAS_FILE):
+        df = pd.read_csv(EMPRESAS_FILE)
+        # Converte os valores numéricos e substitui NaN por 0
+        df['taxa_total_cobrada'] = pd.to_numeric(df['taxa_total_cobrada'], errors='coerce').fillna(0)
+        df['taxa_total_entregador'] = pd.to_numeric(df['taxa_total_entregador'], errors='coerce').fillna(0)
+        # Garante que todas as colunas necessárias existam
+        colunas_padrao = ['nome', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador', 'status']
+        for coluna in colunas_padrao:
+            if coluna not in df.columns:
+                df[coluna] = ''
+        # Define status como 'ativo' para registros sem status
+        df.loc[df['status'].isna(), 'status'] = 'ativo'
+        # Converte o DataFrame para dicionário
+        empresas = df.to_dict('records')
+        # Garante que não haja NaN no JSON
+        for empresa in empresas:
+            for key, value in empresa.items():
+                if pd.isna(value):
+                    if key in ['taxa_total_cobrada', 'taxa_total_entregador']:
+                        empresa[key] = 0.0
+                    else:
+                        empresa[key] = ''
+        return empresas
+    return []
+
+def salvar_empresas(df):
+    df.to_csv(EMPRESAS_FILE, index=False)
+
+def carregar_entregadores():
+    if os.path.exists(ENTREGADORES_FILE):
+        df = pd.read_csv(ENTREGADORES_FILE)
+        # Garante que todas as colunas necessárias existam
+        colunas_padrao = ['nome', 'cpf', 'status']
+        for coluna in colunas_padrao:
+            if coluna not in df.columns:
+                df[coluna] = ''
+        # Define status como 'ativo' para registros sem status
+        df.loc[df['status'].isna(), 'status'] = 'ativo'
+        # Converte CPF para string
+        df['cpf'] = df['cpf'].astype(str)
+        # Converte o DataFrame para dicionário
+        entregadores = df.to_dict('records')
+        # Garante que não haja NaN no JSON
+        for entregador in entregadores:
+            for key, value in entregador.items():
+                if pd.isna(value):
+                    entregador[key] = ''
+        return entregadores
+    return []
+
+def salvar_entregadores(df):
+    df.to_csv(ENTREGADORES_FILE, index=False)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        senha = request.form.get('senha')
+        
+        usuarios = carregar_usuarios()
+        for usuario in usuarios:
+            if usuario['username'] == username and usuario['senha'] == senha:
+                session['username'] = username
+                session['permissao'] = usuario['permissao']
+                return redirect(url_for('index'))
+        
+        return render_template('login.html', error='Usuário ou senha inválidos')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/cadastro_usuario', methods=['GET', 'POST'])
+@admin_required
+def cadastro_usuario():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        senha = request.form.get('senha')
+        permissao = request.form.get('permissao')
+        
+        if permissao not in ['ADM', 'supervisor']:
+            return render_template('cadastro_usuario.html', error='Permissão inválida', usuarios=carregar_usuarios(), permissao=session.get('permissao'))
+        
+        usuarios = carregar_usuarios()
+        if any(u['username'] == username for u in usuarios):
+            return render_template('cadastro_usuario.html', error='Usuário já existe', usuarios=usuarios, permissao=session.get('permissao'))
+        
+        usuarios.append({
+            'username': username,
+            'senha': senha,
+            'permissao': permissao
+        })
+        salvar_usuarios(usuarios)
+        return redirect(url_for('cadastro_usuario'))
+    
+    return render_template('cadastro_usuario.html', usuarios=carregar_usuarios(), permissao=session.get('permissao'))
+
+@app.route('/editar_usuario', methods=['POST'])
+@admin_required
+def editar_usuario():
+    username_original = request.form.get('username_original')
+    username = request.form.get('username')
+    senha = request.form.get('senha')
+    permissao = request.form.get('permissao')
+    
+    if not username or not permissao:
+        return jsonify({'success': False, 'error': 'Campos obrigatórios não preenchidos'})
+    
+    if permissao not in ['ADM', 'supervisor']:
+        return jsonify({'success': False, 'error': 'Permissão inválida'})
+    
+    usuarios = carregar_usuarios()
+    
+    # Verifica se o novo username já existe (exceto para o próprio usuário)
+    if any(u['username'] == username and u['username'] != username_original for u in usuarios):
+        return jsonify({'success': False, 'error': 'Nome de usuário já existe'})
+    
+    # Atualiza o usuário
+    for usuario in usuarios:
+        if usuario['username'] == username_original:
+            usuario['username'] = username
+            if senha:  # Só atualiza a senha se foi fornecida
+                usuario['senha'] = senha
+            usuario['permissao'] = permissao
+            break
+    
+    salvar_usuarios(usuarios)
+    return jsonify({'success': True})
+
+@app.route('/excluir_usuario', methods=['POST'])
+@admin_required
+def excluir_usuario():
+    data = request.get_json()
+    username = data.get('username')
+    
+    if not username:
+        return jsonify({'success': False, 'error': 'Usuário não especificado'})
+    
+    usuarios = carregar_usuarios()
+    
+    # Não permite excluir o último usuário ADM
+    if any(u['username'] == username and u['permissao'] == 'ADM' for u in usuarios):
+        adm_count = sum(1 for u in usuarios if u['permissao'] == 'ADM')
+        if adm_count <= 1:
+            return jsonify({'success': False, 'error': 'Não é possível excluir o último usuário administrador'})
+    
+    # Remove o usuário
+    usuarios = [u for u in usuarios if u['username'] != username]
+    salvar_usuarios(usuarios)
+    return jsonify({'success': True})
 
 def carregar_dados():
     try:
-        if os.path.exists(DADOS_FILE):
-            df = pd.read_csv(DADOS_FILE)
+        if os.path.exists(EMPRESAS_FILE) and os.path.exists(ENTREGADORES_FILE):
+            df_empresas = pd.read_csv(EMPRESAS_FILE)
+            df_entregadores = pd.read_csv(ENTREGADORES_FILE)
             # Define os tipos de dados corretamente
-            df['taxa_total_cobrada'] = pd.to_numeric(df['taxa_total_cobrada'], errors='coerce').fillna(0)
-            df['taxa_total_entregador'] = pd.to_numeric(df['taxa_total_entregador'], errors='coerce').fillna(0)
-            df['cpf'] = df['cpf'].astype(str)
+            df_empresas['taxa_total_cobrada'] = pd.to_numeric(df_empresas['taxa_total_cobrada'], errors='coerce').fillna(0)
+            df_empresas['taxa_total_entregador'] = pd.to_numeric(df_empresas['taxa_total_entregador'], errors='coerce').fillna(0)
+            df_entregadores['cpf'] = df_entregadores['cpf'].astype(str)
             # Garante que todas as colunas existam
             colunas_padrao = ['tipo', 'nome', 'cpf', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador', 'status']
             for coluna in colunas_padrao:
-                if coluna not in df.columns:
-                    df[coluna] = ''
+                if coluna not in df_empresas.columns:
+                    df_empresas[coluna] = ''
+                if coluna not in df_entregadores.columns:
+                    df_entregadores[coluna] = ''
             # Define status como 'ativo' para registros sem status
-            df.loc[df['status'] == '', 'status'] = 'ativo'
-            return df
+            df_empresas.loc[df_empresas['status'] == '', 'status'] = 'ativo'
+            df_entregadores.loc[df_entregadores['status'] == '', 'status'] = 'ativo'
+            return df_empresas, df_entregadores
     except Exception as e:
         print(f"Erro ao carregar dados: {str(e)}")
-    return pd.DataFrame(columns=['tipo', 'nome', 'cpf', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador', 'status'])
+    return pd.DataFrame(columns=['tipo', 'nome', 'cpf', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador', 'status']), pd.DataFrame(columns=['nome', 'cpf', 'status'])
 
-def salvar_dados(df):
+def salvar_dados(df_empresas, df_entregadores):
     # Converte os tipos de dados antes de salvar
-    df['taxa_total_cobrada'] = pd.to_numeric(df['taxa_total_cobrada'], errors='coerce')
-    df['taxa_total_entregador'] = pd.to_numeric(df['taxa_total_entregador'], errors='coerce')
-    df['cpf'] = df['cpf'].astype(str)
-    df.to_csv(DADOS_FILE, index=False)
+    df_empresas['taxa_total_cobrada'] = pd.to_numeric(df_empresas['taxa_total_cobrada'], errors='coerce')
+    df_empresas['taxa_total_entregador'] = pd.to_numeric(df_empresas['taxa_total_entregador'], errors='coerce')
+    df_empresas['cpf'] = df_empresas['cpf'].astype(str)
+    df_entregadores['cpf'] = df_entregadores['cpf'].astype(str)
+    df_empresas.to_csv(EMPRESAS_FILE, index=False)
+    df_entregadores.to_csv(ENTREGADORES_FILE, index=False)
 
 def carregar_escala():
     if os.path.exists(ESCALA_FILE):
@@ -93,120 +286,188 @@ def salvar_diarias(df_diarias):
     df_diarias.to_excel(DIARIAS_FILE, index=False)
 
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', permissao=session.get('permissao'))
 
 @app.route('/cadastros')
+@admin_required
 def cadastros():
-    return render_template('cadastros.html')
+    return render_template('cadastros.html', permissao=session.get('permissao'))
 
 @app.route('/api/empresas', methods=['GET'])
-def get_empresas():
-    try:
-        df = carregar_dados()
-        # Filtra apenas empresas ativas
-        empresas = df[(df['tipo'] == 'empresa') & (df['status'] == 'ativo')].fillna('').to_dict('records')
-        for empresa in empresas:
-            empresa['taxa_total_cobrada'] = float(empresa.get('taxa_total_cobrada', 0))
-            empresa['taxa_total_entregador'] = float(empresa.get('taxa_total_entregador', 0))
-        return jsonify(empresas)
-    except Exception as e:
-        print(f"Erro ao obter empresas: {str(e)}")
-        return jsonify([])
+@admin_required
+def api_empresas():
+    empresas = carregar_empresas()
+    # Retorna todos os registros, incluindo inativos, para a página de cadastros
+    return jsonify(empresas)
 
 @app.route('/api/entregadores', methods=['GET'])
-def get_entregadores():
-    df = carregar_dados()
-    # Filtra apenas entregadores ativos
-    entregadores = df[(df['tipo'] == 'entregador') & (df['status'] == 'ativo')][['nome', 'cpf']].to_dict('records')
+@admin_required
+def api_entregadores():
+    entregadores = carregar_entregadores()
+    # Retorna todos os registros, incluindo inativos, para a página de cadastros
     return jsonify(entregadores)
 
 @app.route('/api/cadastrar', methods=['POST'])
-def cadastrar():
+@admin_required
+def api_cadastrar():
     try:
-        dados = request.json
-        df = carregar_dados()
+        data = request.get_json()
+        tipo = data.get('tipo')
         
-        # Garante que o mínimo garantido seja S ou N
-        minimo_garantido = dados.get('minimo_garantido', '')
-        if minimo_garantido.lower() == 'sim':
-            minimo_garantido = 'S'
-        elif minimo_garantido.lower() == 'não' or minimo_garantido.lower() == 'nao':
-            minimo_garantido = 'N'
+        if tipo == 'empresa':
+            empresas = carregar_empresas()  # Retorna lista de dicionários
+            nova_empresa = {
+                'nome': data['nome'],
+                'veiculo': data['veiculo'],
+                'tipo_valor': data['tipo_valor'],
+                'minimo_garantido': data['minimo_garantido'],
+                'taxa_total_cobrada': float(data['taxa_total_cobrada']),
+                'taxa_total_entregador': float(data['taxa_total_entregador']),
+                'status': 'ativo'
+            }
+            
+            # Se empresas é uma lista vazia, cria um DataFrame com a nova empresa
+            if not empresas:
+                df = pd.DataFrame([nova_empresa])
+            else:
+                # Se já existem empresas, adiciona a nova
+                df = pd.DataFrame(empresas)
+                df = pd.concat([df, pd.DataFrame([nova_empresa])], ignore_index=True)
+            
+            salvar_empresas(df)
+            return jsonify({'status': 'success'})
         
-        novo_registro = pd.DataFrame([{
-            'tipo': dados['tipo'],
-            'nome': dados['nome'],
-            'cpf': str(dados.get('cpf', '')),
-            'veiculo': dados.get('veiculo', ''),
-            'tipo_valor': dados.get('tipo_valor', ''),
-            'minimo_garantido': minimo_garantido,
-            'taxa_total_cobrada': float(dados.get('taxa_total_cobrada', 0)),
-            'taxa_total_entregador': float(dados.get('taxa_total_entregador', 0)),
-            'status': 'ativo'
-        }])
+        elif tipo == 'entregador':
+            entregadores = carregar_entregadores()  # Retorna lista de dicionários
+            novo_entregador = {
+                'nome': data['nome'],
+                'cpf': data['cpf'],
+                'status': 'ativo'
+            }
+            
+            # Se entregadores é uma lista vazia, cria um DataFrame com o novo entregador
+            if not entregadores:
+                df = pd.DataFrame([novo_entregador])
+            else:
+                # Se já existem entregadores, adiciona o novo
+                df = pd.DataFrame(entregadores)
+                df = pd.concat([df, pd.DataFrame([novo_entregador])], ignore_index=True)
+            
+            salvar_entregadores(df)
+            return jsonify({'status': 'success'})
         
-        df = pd.concat([df, novo_registro], ignore_index=True)
-        salvar_dados(df)
-        return jsonify({'status': 'success'})
+        return jsonify({'status': 'error', 'message': 'Tipo inválido'})
     except Exception as e:
         print(f"Erro ao cadastrar: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/api/diaria', methods=['POST'])
-def registrar_diaria():
-    dados = request.json
-    df_diarias = carregar_diarias()
+@app.route('/api/editar/empresa', methods=['POST'])
+@admin_required
+def api_editar_empresa():
+    data = request.get_json()
+    df = pd.DataFrame(carregar_empresas())  # Converte lista de dicionários para DataFrame
     
-    # Busca o CPF do entregador e as informações da empresa no cadastro
-    df_entregadores = carregar_dados()
-    entregador_info = df_entregadores[
-        (df_entregadores['tipo'] == 'entregador') & 
-        (df_entregadores['nome'] == dados['entregador'])
-    ].iloc[0]
+    # Encontra o índice da empresa a ser editada
+    idx = df[df['nome'] == data['id']].index[0]
     
-    empresa_info = df_entregadores[
-        (df_entregadores['tipo'] == 'empresa') & 
-        (df_entregadores['nome'] == dados['empresa'])
-    ].iloc[0]
+    # Atualiza os dados
+    df.loc[idx, 'nome'] = data['nome']
+    df.loc[idx, 'veiculo'] = data['veiculo']
+    df.loc[idx, 'tipo_valor'] = data['tipo_valor']
+    df.loc[idx, 'minimo_garantido'] = data['minimo_garantido']
+    df.loc[idx, 'taxa_total_cobrada'] = data['taxa_total_cobrada']
+    df.loc[idx, 'taxa_total_entregador'] = data['taxa_total_entregador']
+    df.loc[idx, 'status'] = 'ativo'  # Garante que o status permaneça ativo
     
-    # Formata as datas para o padrão aaaa-mm-dd hh:mm:ss
-    data_inicio = datetime.strptime(dados['data_inicio'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
-    data_fim = datetime.strptime(dados['data_fim'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Calcula as taxas baseado no tipo de valor
-    if empresa_info['tipo_valor'] == 'unico':
-        taxa_total_cobrada = empresa_info['taxa_total_cobrada']
-        taxa_total_entregador = empresa_info['taxa_total_entregador']
-    else:  # valor por hora
-        # Calcula a diferença em horas
-        inicio = datetime.strptime(data_inicio, '%Y-%m-%d %H:%M:%S')
-        fim = datetime.strptime(data_fim, '%Y-%m-%d %H:%M:%S')
-        diferenca = fim - inicio
-        horas = diferenca.total_seconds() / 3600
-        
-        # Calcula as taxas
-        taxa_total_cobrada = float(empresa_info['taxa_total_cobrada']) * horas
-        taxa_total_entregador = float(empresa_info['taxa_total_entregador']) * horas
-    
-    novo_registro = pd.DataFrame([{
-        'Data e hora de início': data_inicio,
-        'Data e hora de fim': data_fim,
-        'Empresa': dados['empresa'],
-        'Tipo Veiculo': dados['veiculo'],
-        'Entregador': dados['entregador'],
-        'CPF': entregador_info['cpf'],
-        'Taxa total cobrada': taxa_total_cobrada,
-        'Taxa total entregador': taxa_total_entregador,
-        'Taxa mínima cobrada': empresa_info['minimo_garantido'],
-        'Taxa mínima entregador': empresa_info['minimo_garantido']
-    }])
-    
-    # Adiciona o novo registro à planilha de diárias
-    df_diarias = pd.concat([df_diarias, novo_registro], ignore_index=True)
-    salvar_diarias(df_diarias)
-    
+    salvar_empresas(df)
     return jsonify({'status': 'success'})
+
+@app.route('/api/editar/entregador', methods=['POST'])
+@admin_required
+def api_editar_entregador():
+    data = request.get_json()
+    df = pd.DataFrame(carregar_entregadores())  # Converte lista de dicionários para DataFrame
+    
+    # Encontra o índice do entregador a ser editado
+    idx = df[df['nome'] == data['id']].index[0]
+    
+    # Atualiza os dados
+    df.loc[idx, 'nome'] = data['nome']
+    df.loc[idx, 'cpf'] = data['cpf']
+    df.loc[idx, 'status'] = 'ativo'  # Garante que o status permaneça ativo
+    
+    salvar_entregadores(df)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/excluir/empresa', methods=['POST'])
+@admin_required
+def api_excluir_empresa():
+    try:
+        data = request.get_json()
+        nome = data.get('nome')
+        
+        empresas = carregar_empresas()  # Já retorna uma lista de dicionários
+        df = pd.DataFrame(empresas)
+        
+        # Em vez de excluir, altera o status para 'inativo' ou 'ativo'
+        status_atual = df.loc[df['nome'] == nome, 'status'].iloc[0]
+        novo_status = 'inativo' if status_atual == 'ativo' else 'ativo'
+        df.loc[df['nome'] == nome, 'status'] = novo_status
+        
+        salvar_empresas(df)
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        print(f"Erro ao alterar status da empresa: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/excluir/entregador', methods=['POST'])
+@admin_required
+def api_excluir_entregador():
+    try:
+        data = request.get_json()
+        nome = data.get('nome')
+        
+        entregadores = carregar_entregadores()  # Já retorna uma lista de dicionários
+        df = pd.DataFrame(entregadores)
+        
+        # Em vez de excluir, altera o status para 'inativo' ou 'ativo'
+        status_atual = df.loc[df['nome'] == nome, 'status'].iloc[0]
+        novo_status = 'inativo' if status_atual == 'ativo' else 'ativo'
+        df.loc[df['nome'] == nome, 'status'] = novo_status
+        
+        salvar_entregadores(df)
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        print(f"Erro ao alterar status do entregador: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/empresas/ativas', methods=['GET'])
+def api_empresas_ativas():
+    try:
+        df = pd.DataFrame(carregar_empresas())
+        # Filtra apenas registros ativos
+        df = df[df['status'] == 'ativo']
+        empresas = df.to_dict('records')
+        print("Empresas ativas encontradas:", len(empresas))  # Log para debug
+        return jsonify(empresas)
+    except Exception as e:
+        print(f"Erro ao carregar empresas ativas: {str(e)}")  # Log para debug
+        return jsonify([])
+
+@app.route('/api/entregadores/ativos', methods=['GET'])
+def api_entregadores_ativos():
+    try:
+        df = pd.DataFrame(carregar_entregadores())
+        # Filtra apenas registros ativos
+        df = df[df['status'] == 'ativo']
+        entregadores = df.to_dict('records')
+        print("Entregadores ativos encontrados:", len(entregadores))  # Log para debug
+        return jsonify(entregadores)
+    except Exception as e:
+        print(f"Erro ao carregar entregadores ativos: {str(e)}")  # Log para debug
+        return jsonify([])
 
 @app.route('/api/exportar', methods=['GET'])
 def exportar_excel():
@@ -250,7 +511,8 @@ def get_diarias():
             'CPF',
             'Taxa total cobrada',
             'Taxa total entregador',
-            'Taxa mínima cobrada'
+            'Taxa mínima cobrada',
+            'Taxa mínima entregador'
         ]
         
         for coluna in colunas_necessarias:
@@ -280,138 +542,53 @@ def get_diarias():
         print(f"Erro ao obter diárias: {str(e)}")  # Log para debug
         return jsonify([])
 
-@app.route('/api/editar/empresa', methods=['POST'])
-def editar_empresa():
-    dados = request.get_json()
+@app.route('/api/diaria', methods=['POST'])
+def api_diaria():
     try:
-        df = carregar_dados()
+        data = request.get_json()
         
-        # Encontra o índice da empresa pelo nome antigo e tipo 'empresa'
-        idx = df[(df['nome'] == dados['id']) & (df['tipo'] == 'empresa')].index[0]
+        # Carrega as informações da empresa e do entregador
+        empresas = pd.DataFrame(carregar_empresas())
+        entregadores = pd.DataFrame(carregar_entregadores())
         
-        # Atualiza os dados
-        df.loc[idx, 'nome'] = dados['nome']
-        df.loc[idx, 'veiculo'] = dados['veiculo']
-        df.loc[idx, 'tipo_valor'] = dados['tipo_valor']
-        df.loc[idx, 'minimo_garantido'] = dados['minimo_garantido']
-        df.loc[idx, 'taxa_total_cobrada'] = float(dados['taxa_total_cobrada'])
-        df.loc[idx, 'taxa_total_entregador'] = float(dados['taxa_total_entregador'])
+        # Encontra a empresa e o entregador
+        empresa = empresas[empresas['nome'] == data['empresa']].iloc[0]
+        entregador = entregadores[entregadores['nome'] == data['entregador']].iloc[0]
         
-        # Salva os dados atualizados
-        df.to_csv('dados.csv', index=False)
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/excluir/empresa', methods=['POST'])
-def excluir_empresa():
-    dados = request.get_json()
-    try:
-        df = carregar_dados()
+        # Formata as datas para o formato desejado
+        data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
+        data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
         
-        # Marca a empresa como excluída ao invés de remover
-        idx = df[(df['nome'] == dados['nome']) & (df['tipo'] == 'empresa')].index[0]
-        df.loc[idx, 'status'] = 'excluido'
+        # Cria o registro da diária
+        nova_diaria = {
+            'Data e hora de início': data_inicio,
+            'Data e hora de fim': data_fim,
+            'Empresa': data['empresa'],
+            'Tipo Veiculo': data['veiculo'],
+            'Entregador': data['entregador'],
+            'CPF': entregador['cpf'],
+            'Taxa total cobrada': float(empresa['taxa_total_cobrada']),
+            'Taxa total entregador': float(empresa['taxa_total_entregador']),
+            'Taxa mínima cobrada': 'S' if empresa['minimo_garantido'] == 'S' else 'N',
+            'Taxa mínima entregador': 'S' if empresa['minimo_garantido'] == 'S' else 'N'
+        }
         
-        # Salva os dados atualizados
-        salvar_dados(df)
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/editar/entregador', methods=['POST'])
-def editar_entregador():
-    dados = request.get_json()
-    try:
-        df = carregar_dados()
-        
-        # Encontra o índice do entregador pelo nome antigo e tipo 'entregador'
-        idx = df[(df['nome'] == dados['id']) & (df['tipo'] == 'entregador')].index[0]
-        
-        # Atualiza os dados
-        df.loc[idx, 'nome'] = dados['nome']
-        df.loc[idx, 'cpf'] = str(dados['cpf'])
-        
-        # Salva os dados atualizados
-        df.to_csv('dados.csv', index=False)
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/excluir/entregador', methods=['POST'])
-def excluir_entregador():
-    dados = request.get_json()
-    try:
-        df = carregar_dados()
-        
-        # Marca o entregador como excluído ao invés de remover
-        idx = df[(df['nome'] == dados['nome']) & (df['tipo'] == 'entregador')].index[0]
-        df.loc[idx, 'status'] = 'excluido'
-        
-        # Salva os dados atualizados
-        salvar_dados(df)
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/exportar')
-def exportar_diarias():
-    try:
-        # Obtém os parâmetros da query string
-        data_inicial = request.args.get('data_inicial')
-        data_final = request.args.get('data_final')
-        empresas = request.args.get('empresas', '').split(',')
-
-        if not data_inicial or not data_final:
-            return jsonify({'status': 'error', 'message': 'Datas não fornecidas'}), 400
-
-        # Carrega os dados
+        # Carrega as diárias existentes
         df_diarias = carregar_diarias()
         
-        # Converte as datas para datetime
-        df_diarias['Data e hora de início'] = pd.to_datetime(df_diarias['Data e hora de início'])
-        df_diarias['Data e hora de fim'] = pd.to_datetime(df_diarias['Data e hora de fim'])
+        # Adiciona a nova diária
+        if df_diarias.empty:
+            df_diarias = pd.DataFrame([nova_diaria])
+        else:
+            df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
         
-        # Converte as datas do filtro para datetime
-        data_inicial = pd.to_datetime(data_inicial)
-        data_final = pd.to_datetime(data_final + ' 23:59:59')
+        # Salva o arquivo atualizado
+        salvar_diarias(df_diarias)
         
-        # Filtra as diárias pelo período
-        df_filtrado = df_diarias[
-            (df_diarias['Data e hora de início'].dt.date >= data_inicial.date()) &
-            (df_diarias['Data e hora de fim'].dt.date <= data_final.date())
-        ]
-
-        # Filtra por empresas se houver empresas selecionadas
-        if empresas and empresas[0]:  # Verifica se há empresas selecionadas
-            df_filtrado = df_filtrado[df_filtrado['Empresa'].isin(empresas)]
-
-        if df_filtrado.empty:
-            return jsonify({'status': 'error', 'message': 'Nenhuma diária encontrada no período'}), 404
-
-        # Cria um buffer para salvar o arquivo Excel
-        output = io.BytesIO()
-        
-        # Salva o DataFrame filtrado no buffer
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_filtrado.to_excel(writer, index=False, sheet_name='Diárias')
-        
-        output.seek(0)
-        
-        # Define o nome do arquivo com a data atual
-        hoje = datetime.now().strftime('%Y%m%d')
-        nome_arquivo = f'diarias_{hoje}.xlsx'
-
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name=nome_arquivo
-        )
-
+        return jsonify({'status': 'success'})
     except Exception as e:
-        print(f'Erro ao exportar diárias: {str(e)}')
-        return jsonify({'status': 'error', 'message': 'Erro ao exportar diárias'}), 500
+        print(f"Erro ao registrar diária: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

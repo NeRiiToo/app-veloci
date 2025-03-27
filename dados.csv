@@ -5,5 +5,7 @@ entregador,Moab Sousa Neri,12345678799.0,,,,0.0,0.0,ativo
 entregador,Ewerton Grigório,1234567899.0,,,,0.0,0.0,ativo
 empresa,Nonni La Pasta,nan,Nonni La Pasta,hora,N,6.5,5.0,ativo
 empresa,Cantina Volpi Lauro,nan,Cantina Volpi Lauro,unico,N,50.0,50.0,ativo
-empresa,Cantina Volpi - Paralela,nan,Cantina Volpi - Paralela,unico,N,13.0,10.0,ativo
-empresa,Cantina Volpi Pituba,,Cantina Volpi Pituba,unico,N,13.0,8.0,ativo
+empresa,Cantina Volpi - Paralela,nan,Cantina Volpi - Paralela,unico,N,15.0,13.0,excluido
+empresa,Cantina Volpi Pituba,nan,Cantina Volpi Pituba,unico,N,13.0,8.0,ativo
+empresa,Cantina Volpi Paralela,nan,Cantina Volpi Paralela,unico,N,15.0,13.0,ativo
+empresa,Cantina Volpi Pituba,nan,Cantina Volpi Pituba,unico,N,13.0,8.0,ativo

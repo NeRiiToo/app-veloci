@@ -24,12 +24,25 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="/">Registrar Diária</a>
                     </li>
+                    {% if permissao == 'ADM' %}
                     <li class="nav-item">
                         <a class="nav-link" href="/cadastros">Cadastros</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cadastro_usuario">Usuários</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link">Usuário: {{ session.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Sair</a>
                     </li>
                 </ul>
             </div>
@@ -113,6 +126,7 @@
             </div>
         </div>
 
+        {% if permissao == 'ADM' %}
         <div class="row mt-4">
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -180,6 +194,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <!-- Modal Exportar Diárias -->
@@ -232,35 +247,66 @@
         let diariasTemporarias = [];
 
         function carregarDados() {
+            console.log('Carregando todos os dados...');
             carregarEmpresas();
             carregarEntregadores();
+            {% if permissao == 'ADM' %}
             carregarDiarias();
             carregarFiltroEmpresas();
+            {% endif %}
         }
 
         function carregarEmpresas() {
-            fetch('/api/empresas')
-                .then(response => response.json())
+            console.log('Carregando empresas ativas...');
+            fetch('/api/empresas/ativas')
+                .then(response => {
+                    console.log('Resposta empresas:', response);
+                    return response.json();
+                })
                 .then(data => {
-                    const select = $('select[name="empresa"]');
-                    select.empty();
-                    select.append(new Option('Selecione uma empresa', ''));
-                    data.forEach(empresa => {
-                        select.append(new Option(empresa.nome, empresa.nome));
-                    });
+                    console.log('Dados empresas:', data);
+                    const select = document.querySelector('select[name="empresa"]');
+                    if (select) {
+                        select.innerHTML = '<option value="">Selecione uma empresa</option>';
+                        data.forEach(empresa => {
+                            const option = document.createElement('option');
+                            option.value = empresa.nome;
+                            option.textContent = empresa.nome;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.error('Elemento select para empresas não encontrado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar empresas:', error);
                 });
         }
 
         function carregarEntregadores() {
-            fetch('/api/entregadores')
-                .then(response => response.json())
+            console.log('Carregando entregadores ativos...');
+            fetch('/api/entregadores/ativos')
+                .then(response => {
+                    console.log('Resposta entregadores:', response);
+                    return response.json();
+                })
                 .then(data => {
-                    const select = $('select[name="entregador"]');
-                    select.empty();
-                    select.append(new Option('Selecione um entregador', ''));
-                    data.forEach(entregador => {
-                        select.append(new Option(entregador.nome, entregador.nome));
-                    });
+                    console.log('Dados entregadores:', data);
+                    const select = document.querySelector('select[name="entregador"]');
+                    if (select) {
+                        select.innerHTML = '<option value="">Selecione um entregador</option>';
+                        data.forEach(entregador => {
+                            const option = document.createElement('option');
+                            option.value = entregador.nome;
+                            option.textContent = entregador.nome;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.error('Elemento select para entregadores não encontrado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar entregadores:', error);
                 });
         }
 
@@ -336,13 +382,26 @@
             const form = document.getElementById('diariaForm');
             const formData = new FormData(form);
             
+            // Validação básica inicial
+            if (!formData.get('data_inicio') || !formData.get('data_fim') || !formData.get('empresa') || !formData.get('entregador')) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
             // Busca as informações da empresa selecionada
-            fetch('/api/empresas')
-                .then(response => response.json())
+            fetch('/api/empresas/ativas')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(empresas => {
+                    console.log('Empresas recebidas:', empresas);
                     const empresa = empresas.find(e => e.nome === formData.get('empresa'));
+                    
                     if (!empresa) {
-                        alert('Empresa não encontrada');
+                        alert('Empresa não encontrada nos registros ativos.');
                         return;
                     }
 
@@ -351,14 +410,8 @@
                         data_fim: formData.get('data_fim'),
                         empresa: formData.get('empresa'),
                         entregador: formData.get('entregador'),
-                        veiculo: empresa.veiculo // Adiciona o veículo da empresa
+                        veiculo: empresa.veiculo
                     };
-
-                    // Validação básica
-                    if (!diaria.data_inicio || !diaria.data_fim || !diaria.empresa || !diaria.entregador) {
-                        alert('Por favor, preencha todos os campos.');
-                        return;
-                    }
 
                     // Adiciona a diária ao array temporário
                     diariasTemporarias.push(diaria);
@@ -371,6 +424,10 @@
                     
                     // Habilita o botão de enviar escala
                     document.getElementById('btnEnviarEscala').disabled = false;
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar informações da empresa:', error);
+                    alert('Erro ao adicionar diária. Por favor, tente novamente.');
                 });
         }
 
@@ -580,8 +637,11 @@
             atualizarTabelaDiarias(todasDiarias);
         }
 
-        // Carrega os dados quando a página é carregada
-        document.addEventListener('DOMContentLoaded', carregarDados);
+        // Carrega os dados ao iniciar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página carregada, iniciando carregamento de dados...');
+            carregarDados();
+        });
     </script>
 </body>
 </html> 

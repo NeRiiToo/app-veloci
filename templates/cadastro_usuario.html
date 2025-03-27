@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuário - Sistema de Gerenciamento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .cadastro-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Sistema de Gerenciamento</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Registrar Diária</a>
+                    </li>
+                    {% if permissao == 'ADM' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cadastros">Cadastros</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/cadastro_usuario">Usuários</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link">Usuário: {{ session.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Sair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="cadastro-container">
+            <h2 class="text-center mb-4">Gerenciamento de Usuários</h2>
+            
+            <!-- Formulário de Cadastro -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Novo Usuário</h5>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    <form method="POST" id="formCadastro">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Usuário</label>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="senha" class="form-label">Senha</label>
+                                    <input type="password" class="form-control" id="senha" name="senha" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="permissao" class="form-label">Permissão</label>
+                                    <select class="form-select" id="permissao" name="permissao" required>
+                                        <option value="">Selecione uma permissão</option>
+                                        <option value="ADM">Administrador</option>
+                                        <option value="supervisor">Supervisor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Cadastrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Lista de Usuários -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Usuários Cadastrados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Permissão</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in usuarios %}
+                                <tr>
+                                    <td>{{ usuario.username }}</td>
+                                    <td>{{ usuario.permissao }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('{{ usuario.username }}', '{{ usuario.permissao }}')">
+                                            Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="confirmarExclusao('{{ usuario.username }}')">
+                                            Excluir
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="modalEditar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditar" method="POST">
+                        <input type="hidden" id="edit_username_original" name="username_original">
+                        <div class="mb-3">
+                            <label for="edit_username" class="form-label">Novo Usuário</label>
+                            <input type="text" class="form-control" id="edit_username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_senha" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                            <input type="password" class="form-control" id="edit_senha" name="senha">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_permissao" class="form-label">Permissão</label>
+                            <select class="form-select" id="edit_permissao" name="permissao" required>
+                                <option value="ADM">Administrador</option>
+                                <option value="supervisor">Supervisor</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarEdicao()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let modalEditar;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+        });
+
+        function abrirModalEditar(username, permissao) {
+            document.getElementById('edit_username_original').value = username;
+            document.getElementById('edit_username').value = username;
+            document.getElementById('edit_permissao').value = permissao;
+            document.getElementById('edit_senha').value = '';
+            modalEditar.show();
+        }
+
+        function salvarEdicao() {
+            const form = document.getElementById('formEditar');
+            const formData = new FormData(form);
+            
+            fetch('/editar_usuario', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Erro ao editar usuário');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao editar usuário');
+            });
+        }
+
+        function confirmarExclusao(username) {
+            if (confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
+                fetch('/excluir_usuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Erro ao excluir usuário');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao excluir usuário');
+                });
+            }
+        }
+    </script>
+</body>
+</html> 
