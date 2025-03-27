@@ -2,9 +2,47 @@ from flask import Flask, render_template, request, jsonify, send_file, redirect,
 import pandas as pd
 from datetime import datetime
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 import io
 import csv
 from functools import wraps
+
+# Configuração do sistema de logs
+def setup_logger():
+    # Cria a pasta logs se não existir
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+    
+    # Configura o logger
+    logger = logging.getLogger('sistema')
+    logger.setLevel(logging.INFO)
+    
+    # Formato do log
+    formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Handler para arquivo com rotação
+    file_handler = RotatingFileHandler(
+        'logs/sistema.log',
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    # Handler para console
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    return logger
+
+# Inicializa o logger
+logger = setup_logger()
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'  # Necessário para sessões
@@ -122,18 +160,28 @@ def login():
         username = request.form.get('username')
         senha = request.form.get('senha')
         
-        usuarios = carregar_usuarios()
-        for usuario in usuarios:
-            if usuario['username'] == username and usuario['senha'] == senha:
+        try:
+            df = pd.read_csv(USUARIOS_FILE)
+            usuario = df[df['username'] == username].iloc[0]
+            
+            if usuario['senha'] == senha:
                 session['username'] = username
                 session['permissao'] = usuario['permissao']
+                log_action('Login bem-sucedido', username)
                 return redirect(url_for('index'))
-        
-        return render_template('login.html', error='Usuário ou senha inválidos')
+            else:
+                log_action('Tentativa de login falha - Senha incorreta', username)
+                return render_template('login.html', error='Senha incorreta')
+        except Exception as e:
+            log_error('Erro no login', username, str(e))
+            return render_template('login.html', error='Erro ao fazer login')
+    
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
+    if session.get('username'):
+        log_action('Logout', session.get('username'))
     session.clear()
     return redirect(url_for('login'))
 
@@ -152,11 +200,13 @@ def cadastro_usuario():
         empresas_vinculadas = request.form.getlist('empresas_vinculadas[]')
 
         if not username or not senha or not permissao:
+            log_action('Tentativa de cadastro de usuário - Campos incompletos', session.get('username'))
             return jsonify({'success': False, 'error': 'Todos os campos são obrigatórios'})
 
         try:
             df = pd.read_csv(USUARIOS_FILE)
             if username in df['username'].values:
+                log_action('Tentativa de cadastro de usuário - Usuário já existe', session.get('username'), username)
                 return jsonify({'success': False, 'error': 'Nome de usuário já existe'})
 
             novo_usuario = {
@@ -168,10 +218,11 @@ def cadastro_usuario():
 
             df = pd.concat([df, pd.DataFrame([novo_usuario])], ignore_index=True)
             df.to_csv(USUARIOS_FILE, index=False)
+            log_action('Usuário cadastrado com sucesso', session.get('username'), username)
             return jsonify({'success': True})
 
         except Exception as e:
-            print(f"Erro ao cadastrar usuário: {str(e)}")
+            log_error('Erro ao cadastrar usuário', session.get('username'), str(e))
             return jsonify({'success': False, 'error': 'Erro ao cadastrar usuário'})
 
     try:
@@ -179,7 +230,6 @@ def cadastro_usuario():
         usuarios = usuarios.fillna('')
         usuarios_list = []
         
-        # Processa cada usuário para converter a string de empresas em lista
         for _, row in usuarios.iterrows():
             usuario = row.to_dict()
             if usuario['empresas_vinculadas'] and isinstance(usuario['empresas_vinculadas'], str):
@@ -188,7 +238,6 @@ def cadastro_usuario():
                 usuario['empresas_vinculadas'] = []
             usuarios_list.append(usuario)
         
-        # Carrega apenas empresas ativas
         empresas = pd.read_csv(EMPRESAS_FILE)
         empresas = empresas[empresas['status'] == 'ativo']
         empresas_list = empresas['nome'].tolist()
@@ -198,12 +247,13 @@ def cadastro_usuario():
                              empresas=empresas_list, 
                              permissao=session.get('permissao'))
     except Exception as e:
-        print(f"Erro ao carregar dados: {str(e)}")
+        log_error('Erro ao carregar dados de usuários', session.get('username'), str(e))
         return redirect(url_for('index'))
 
 @app.route('/excluir_usuario', methods=['POST'])
 def excluir_usuario():
     if not session.get('username') or session.get('permissao') != 'ADM':
+        log_action('Tentativa de exclusão de usuário - Acesso negado', session.get('username'))
         return jsonify({'success': False, 'error': 'Acesso negado'})
 
     try:
@@ -211,6 +261,7 @@ def excluir_usuario():
         username = data.get('username')
 
         if not username:
+            log_action('Tentativa de exclusão de usuário - Username não fornecido', session.get('username'))
             return jsonify({'success': False, 'error': 'Username não fornecido'})
 
         df = pd.read_csv(USUARIOS_FILE)
@@ -219,19 +270,22 @@ def excluir_usuario():
         if username in df[df['permissao'] == 'ADM']['username'].values:
             adm_count = len(df[df['permissao'] == 'ADM'])
             if adm_count <= 1:
+                log_action('Tentativa de exclusão do último administrador', session.get('username'), username)
                 return jsonify({'success': False, 'error': 'Não é possível excluir o último administrador'})
 
         df = df[df['username'] != username]
         df.to_csv(USUARIOS_FILE, index=False)
+        log_action('Usuário excluído com sucesso', session.get('username'), username)
         return jsonify({'success': True})
 
     except Exception as e:
-        print(f"Erro ao excluir usuário: {str(e)}")
+        log_error('Erro ao excluir usuário', session.get('username'), str(e))
         return jsonify({'success': False, 'error': 'Erro ao excluir usuário'})
 
 @app.route('/editar_usuario', methods=['POST'])
 def editar_usuario():
     if not session.get('username') or session.get('permissao') != 'ADM':
+        log_action('Tentativa de edição de usuário - Acesso negado', session.get('username'))
         return jsonify({'success': False, 'error': 'Acesso negado'})
 
     try:
@@ -241,6 +295,7 @@ def editar_usuario():
         empresas_vinculadas = request.form.getlist('empresas_vinculadas[]')
 
         if not username or not nova_permissao:
+            log_action('Tentativa de edição de usuário - Dados incompletos', session.get('username'))
             return jsonify({'success': False, 'error': 'Dados incompletos'})
 
         df = pd.read_csv(USUARIOS_FILE)
@@ -249,6 +304,7 @@ def editar_usuario():
         if username in df[df['permissao'] == 'ADM']['username'].values:
             adm_count = len(df[df['permissao'] == 'ADM'])
             if adm_count <= 1 and nova_permissao != 'ADM':
+                log_action('Tentativa de alterar permissão do último administrador', session.get('username'), username)
                 return jsonify({'success': False, 'error': 'Não é possível alterar a permissão do último administrador'})
 
         # Atualizar os dados do usuário
@@ -259,10 +315,11 @@ def editar_usuario():
         df.loc[mask, 'empresas_vinculadas'] = '|'.join(empresas_vinculadas) if empresas_vinculadas else ''
 
         df.to_csv(USUARIOS_FILE, index=False)
+        log_action('Usuário editado com sucesso', session.get('username'), username)
         return jsonify({'success': True})
 
     except Exception as e:
-        print(f"Erro ao editar usuário: {str(e)}")
+        log_error('Erro ao editar usuário', session.get('username'), str(e))
         return jsonify({'success': False, 'error': 'Erro ao editar usuário'})
 
 def carregar_dados():
@@ -384,7 +441,7 @@ def api_cadastrar():
         tipo = data.get('tipo')
         
         if tipo == 'empresa':
-            empresas = carregar_empresas()  # Retorna lista de dicionários
+            empresas = carregar_empresas()
             nova_empresa = {
                 'nome': data['nome'],
                 'veiculo': data['veiculo'],
@@ -395,78 +452,124 @@ def api_cadastrar():
                 'status': 'ativo'
             }
             
-            # Se empresas é uma lista vazia, cria um DataFrame com a nova empresa
             if not empresas:
                 df = pd.DataFrame([nova_empresa])
             else:
-                # Se já existem empresas, adiciona a nova
                 df = pd.DataFrame(empresas)
                 df = pd.concat([df, pd.DataFrame([nova_empresa])], ignore_index=True)
             
             salvar_empresas(df)
+            log_action('Empresa cadastrada', session.get('username'), f"Nome: {data['nome']}")
             return jsonify({'status': 'success'})
         
         elif tipo == 'entregador':
-            entregadores = carregar_entregadores()  # Retorna lista de dicionários
+            entregadores = carregar_entregadores()
             novo_entregador = {
                 'nome': data['nome'],
                 'cpf': data['cpf'],
                 'status': 'ativo'
             }
             
-            # Se entregadores é uma lista vazia, cria um DataFrame com o novo entregador
             if not entregadores:
                 df = pd.DataFrame([novo_entregador])
             else:
-                # Se já existem entregadores, adiciona o novo
                 df = pd.DataFrame(entregadores)
                 df = pd.concat([df, pd.DataFrame([novo_entregador])], ignore_index=True)
             
             salvar_entregadores(df)
+            log_action('Entregador cadastrado', session.get('username'), f"Nome: {data['nome']}, CPF: {data['cpf']}")
             return jsonify({'status': 'success'})
         
         return jsonify({'status': 'error', 'message': 'Tipo inválido'})
     except Exception as e:
-        print(f"Erro ao cadastrar: {str(e)}")
+        log_error('Erro ao cadastrar', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/editar/empresa', methods=['POST'])
 @admin_required
 def api_editar_empresa():
-    data = request.get_json()
-    df = pd.DataFrame(carregar_empresas())  # Converte lista de dicionários para DataFrame
-    
-    # Encontra o índice da empresa a ser editada
-    idx = df[df['nome'] == data['id']].index[0]
-    
-    # Atualiza os dados
-    df.loc[idx, 'nome'] = data['nome']
-    df.loc[idx, 'veiculo'] = data['veiculo']
-    df.loc[idx, 'tipo_valor'] = data['tipo_valor']
-    df.loc[idx, 'minimo_garantido'] = data['minimo_garantido']
-    df.loc[idx, 'taxa_total_cobrada'] = data['taxa_total_cobrada']
-    df.loc[idx, 'taxa_total_entregador'] = data['taxa_total_entregador']
-    df.loc[idx, 'status'] = 'ativo'  # Garante que o status permaneça ativo
-    
-    salvar_empresas(df)
-    return jsonify({'status': 'success'})
+    try:
+        data = request.get_json()
+        df = pd.DataFrame(carregar_empresas())
+        
+        idx = df[df['nome'] == data['id']].index[0]
+        
+        # Registra os valores antigos para o log
+        empresa_antiga = df.iloc[idx].to_dict()
+        
+        # Atualiza os dados
+        df.loc[idx, 'nome'] = data['nome']
+        df.loc[idx, 'veiculo'] = data['veiculo']
+        df.loc[idx, 'tipo_valor'] = data['tipo_valor']
+        df.loc[idx, 'minimo_garantido'] = data['minimo_garantido']
+        df.loc[idx, 'taxa_total_cobrada'] = data['taxa_total_cobrada']
+        df.loc[idx, 'taxa_total_entregador'] = data['taxa_total_entregador']
+        df.loc[idx, 'status'] = 'ativo'
+        
+        salvar_empresas(df)
+        
+        # Registra as alterações no log
+        alteracoes = []
+        for campo in ['nome', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador']:
+            if str(empresa_antiga[campo]) != str(data[campo]):
+                alteracoes.append(f"{campo}: {empresa_antiga[campo]} -> {data[campo]}")
+        
+        log_action('Empresa editada', session.get('username'), 
+                  f"Nome: {data['nome']}, Alterações: {', '.join(alteracoes)}")
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        log_error('Erro ao editar empresa', session.get('username'), str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/editar/entregador', methods=['POST'])
 @admin_required
 def api_editar_entregador():
-    data = request.get_json()
-    df = pd.DataFrame(carregar_entregadores())  # Converte lista de dicionários para DataFrame
-    
-    # Encontra o índice do entregador a ser editado
-    idx = df[df['nome'] == data['id']].index[0]
-    
-    # Atualiza os dados
-    df.loc[idx, 'nome'] = data['nome']
-    df.loc[idx, 'cpf'] = data['cpf']
-    df.loc[idx, 'status'] = 'ativo'  # Garante que o status permaneça ativo
-    
-    salvar_entregadores(df)
-    return jsonify({'status': 'success'})
+    try:
+        data = request.get_json()
+        
+        if not data:
+            log_action('Tentativa de edição de entregador - Dados não fornecidos', session.get('username'))
+            return jsonify({'status': 'error', 'message': 'Dados não fornecidos'})
+            
+        if 'id' not in data or 'nome' not in data or 'cpf' not in data:
+            log_action('Tentativa de edição de entregador - Dados incompletos', session.get('username'))
+            return jsonify({'status': 'error', 'message': 'Dados incompletos'})
+        
+        df = pd.DataFrame(carregar_entregadores())
+        
+        # Verifica se o entregador existe
+        if data['id'] not in df['nome'].values:
+            log_action('Tentativa de edição de entregador - Entregador não encontrado', 
+                      session.get('username'), f"ID: {data['id']}")
+            return jsonify({'status': 'error', 'message': 'Entregador não encontrado'})
+        
+        idx = df[df['nome'] == data['id']].index[0]
+        
+        # Registra os valores antigos para o log
+        entregador_antigo = df.iloc[idx].to_dict()
+        
+        # Atualiza os dados
+        df.loc[idx, 'nome'] = data['nome']
+        df.loc[idx, 'cpf'] = data['cpf']
+        df.loc[idx, 'status'] = 'ativo'
+        
+        # Registra as alterações no log antes de salvar
+        alteracoes = []
+        for campo in ['nome', 'cpf']:
+            if str(entregador_antigo[campo]) != str(data[campo]):
+                alteracoes.append(f"{campo}: {entregador_antigo[campo]} -> {data[campo]}")
+        
+        log_action('Entregador editado', session.get('username'), 
+                  f"Nome: {data['nome']}, Alterações: {', '.join(alteracoes)}")
+        
+        # Salva as alterações
+        salvar_entregadores(df)
+        
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        erro = str(e)
+        log_error('Erro ao editar entregador', session.get('username'), erro)
+        return jsonify({'status': 'error', 'message': f'Erro ao editar entregador: {erro}'}), 500
 
 @app.route('/api/excluir/empresa', methods=['POST'])
 @admin_required
@@ -475,18 +578,19 @@ def api_excluir_empresa():
         data = request.get_json()
         nome = data.get('nome')
         
-        empresas = carregar_empresas()  # Já retorna uma lista de dicionários
+        empresas = carregar_empresas()
         df = pd.DataFrame(empresas)
         
-        # Em vez de excluir, altera o status para 'inativo' ou 'ativo'
         status_atual = df.loc[df['nome'] == nome, 'status'].iloc[0]
         novo_status = 'inativo' if status_atual == 'ativo' else 'ativo'
         df.loc[df['nome'] == nome, 'status'] = novo_status
         
         salvar_empresas(df)
+        log_action('Status da empresa alterado', session.get('username'), 
+                  f"Nome: {nome}, Status: {status_atual} -> {novo_status}")
         return jsonify({'status': 'success'})
     except Exception as e:
-        print(f"Erro ao alterar status da empresa: {str(e)}")
+        log_error('Erro ao alterar status da empresa', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/excluir/entregador', methods=['POST'])
@@ -496,18 +600,28 @@ def api_excluir_entregador():
         data = request.get_json()
         nome = data.get('nome')
         
-        entregadores = carregar_entregadores()  # Já retorna uma lista de dicionários
+        if not nome:
+            log_action('Tentativa de alterar status do entregador - Nome não fornecido', session.get('username'))
+            return jsonify({'status': 'error', 'message': 'Nome não fornecido'})
+        
+        entregadores = carregar_entregadores()
         df = pd.DataFrame(entregadores)
         
-        # Em vez de excluir, altera o status para 'inativo' ou 'ativo'
+        if nome not in df['nome'].values:
+            log_action('Tentativa de alterar status do entregador - Entregador não encontrado', 
+                      session.get('username'), nome)
+            return jsonify({'status': 'error', 'message': 'Entregador não encontrado'})
+        
         status_atual = df.loc[df['nome'] == nome, 'status'].iloc[0]
         novo_status = 'inativo' if status_atual == 'ativo' else 'ativo'
         df.loc[df['nome'] == nome, 'status'] = novo_status
         
         salvar_entregadores(df)
+        log_action('Status do entregador alterado', session.get('username'), 
+                  f"Nome: {nome}, Status: {status_atual} -> {novo_status}")
         return jsonify({'status': 'success'})
     except Exception as e:
-        print(f"Erro ao alterar status do entregador: {str(e)}")
+        log_error('Erro ao alterar status do entregador', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/empresas/ativas', methods=['GET'])
@@ -546,28 +660,28 @@ def api_entregadores_ativos():
 
 @app.route('/api/exportar', methods=['GET'])
 def exportar_excel():
-    # Carrega a planilha de diárias
-    df_diarias = carregar_diarias()
-    
-    # Obtém as datas do período selecionado
-    data_inicial = request.args.get('data_inicial')
-    data_final = request.args.get('data_final')
-    
-    # Converte as datas para o formato correto
-    data_inicial = datetime.strptime(data_inicial, '%Y-%m-%d').strftime('%Y-%m-%d')
-    data_final = datetime.strptime(data_final, '%Y-%m-%d').strftime('%Y-%m-%d')
-    
-    # Filtra as diárias do período selecionado
-    df_periodo = df_diarias[
-        (df_diarias['Data e hora de início'].str[:10] >= data_inicial) & 
-        (df_diarias['Data e hora de início'].str[:10] <= data_final)
-    ]
-    
-    # Cria um arquivo Excel temporário com as diárias do período
-    output_file = f'escala_diarias_{data_inicial}_a_{data_final}.xlsx'
-    df_periodo.to_excel(output_file, index=False)
-    
-    return send_file(output_file, as_attachment=True)
+    try:
+        df_diarias = carregar_diarias()
+        data_inicial = request.args.get('data_inicial')
+        data_final = request.args.get('data_final')
+        
+        data_inicial = datetime.strptime(data_inicial, '%Y-%m-%d').strftime('%Y-%m-%d')
+        data_final = datetime.strptime(data_final, '%Y-%m-%d').strftime('%Y-%m-%d')
+        
+        df_periodo = df_diarias[
+            (df_diarias['Data e hora de início'].str[:10] >= data_inicial) & 
+            (df_diarias['Data e hora de início'].str[:10] <= data_final)
+        ]
+        
+        output_file = f'escala_diarias_{data_inicial}_a_{data_final}.xlsx'
+        df_periodo.to_excel(output_file, index=False)
+        
+        log_action('Relatório exportado', session.get('username'), 
+                  f"Período: {data_inicial} até {data_final}")
+        return send_file(output_file, as_attachment=True)
+    except Exception as e:
+        log_error('Erro ao exportar relatório', session.get('username'), str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/diarias', methods=['GET'])
 def get_diarias():
@@ -622,19 +736,15 @@ def api_diaria():
     try:
         data = request.get_json()
         
-        # Carrega as informações da empresa e do entregador
         empresas = pd.DataFrame(carregar_empresas())
         entregadores = pd.DataFrame(carregar_entregadores())
         
-        # Encontra a empresa e o entregador
         empresa = empresas[empresas['nome'] == data['empresa']].iloc[0]
         entregador = entregadores[entregadores['nome'] == data['entregador']].iloc[0]
         
-        # Formata as datas para o formato desejado
         data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
         data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
         
-        # Cria o registro da diária
         nova_diaria = {
             'Data e hora de início': data_inicio,
             'Data e hora de fim': data_fim,
@@ -648,22 +758,46 @@ def api_diaria():
             'Taxa mínima entregador': 'S' if empresa['minimo_garantido'] == 'S' else 'N'
         }
         
-        # Carrega as diárias existentes
         df_diarias = carregar_diarias()
         
-        # Adiciona a nova diária
         if df_diarias.empty:
             df_diarias = pd.DataFrame([nova_diaria])
         else:
             df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
         
-        # Salva o arquivo atualizado
         salvar_diarias(df_diarias)
         
+        log_action('Diária registrada', session.get('username'), 
+                  f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
+                  f"Período: {data_inicio} até {data_fim}")
         return jsonify({'status': 'success'})
     except Exception as e:
-        print(f"Erro ao registrar diária: {str(e)}")
+        log_error('Erro ao registrar diária', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def log_action(action, username, details=None):
+    """
+    Registra uma ação no log do sistema
+    """
+    try:
+        message = f"Ação: {action} - Usuário: {username}"
+        if details:
+            message += f" - Detalhes: {details}"
+        logger.info(message)
+    except Exception as e:
+        print(f"Erro ao registrar log: {str(e)}")
+
+def log_error(error, username, details=None):
+    """
+    Registra um erro no log do sistema
+    """
+    try:
+        message = f"Erro: {error} - Usuário: {username}"
+        if details:
+            message += f" - Detalhes: {details}"
+        logger.error(message)
+    except Exception as e:
+        print(f"Erro ao registrar log de erro: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True) 
