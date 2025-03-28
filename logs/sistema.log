@@ -1,2 +1,35 @@
 2025-03-27 10:52:39 - INFO - Ação: Status do entregador alterado - Usuário: Moab - Detalhes: Nome: givaldo, Status: inativo -> ativo
 2025-03-27 10:53:01 - INFO - Ação: Status do entregador alterado - Usuário: Moab - Detalhes: Nome: Edmilson, Status: ativo -> inativo
+2025-03-27 12:50:28 - INFO - Ação: Logout - Usuário: Moab
+2025-03-27 12:50:34 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-27 12:51:33 - INFO - Ação: Logout - Usuário: Moab
+2025-03-27 12:51:37 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-27 13:10:47 - INFO - Ação: Logout - Usuário: Danilo Rebouças
+2025-03-27 13:10:50 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-27 13:15:34 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - Paralela
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Mário Sérgio da Silva Costa , Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Wellington Carvalho, Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Diego Silva Deveza , Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Jadson Santana , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Jefferson freire de lima , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Pedro Lucas Silva dos Santos , Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Thiago de Andrade Augusto , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 13:45:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Herbert santos da boa morte , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 13:59:27 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: [Errno 13] Permission denied: 'diarias.xlsx'
+2025-03-27 13:59:27 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: [Errno 13] Permission denied: 'diarias.xlsx'
+2025-03-27 13:59:27 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: [Errno 13] Permission denied: 'diarias.xlsx'
+2025-03-27 14:03:24 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Jadson Santana , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 14:03:25 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Jefferson freire de lima , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 14:03:25 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Mário Sérgio da Silva Costa , Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 14:04:01 - INFO - Ação: Relatório exportado - Usuário: Moab - Detalhes: Período: 2025-03-28 até 2025-03-28
+2025-03-27 14:08:46 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Thiago de Andrade Augusto , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 14:08:46 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Herbert santos da boa morte , Período: 2025-03-28 16:30:00 até 2025-03-28 23:30:00
+2025-03-27 14:11:09 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Pedro Lucas Silva dos Santos , Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 14:11:10 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Wellington Carvalho, Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 14:11:10 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Diego Silva Deveza , Período: 2025-03-28 10:30:00 até 2025-03-28 16:30:00
+2025-03-27 14:11:45 - INFO - Ação: Relatório exportado - Usuário: Moab - Detalhes: Período: 2025-03-28 até 2025-03-28
+2025-03-28 09:40:54 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 09:47:52 - INFO - Ação: Logout - Usuário: Moab
+2025-03-28 09:47:55 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-28 09:51:33 - INFO - Ação: Logout - Usuário: Danilo Rebouças
+2025-03-28 09:51:36 - INFO - Ação: Login bem-sucedido - Usuário: Moab

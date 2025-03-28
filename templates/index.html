@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gerenciamento</title>
+    <title>Gerenciamento de Escalas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <style>
         .select2-container {
             width: 100% !important;
         }
         .select2-selection {
-            height: auto !important;
+            height: 38px !important;
+            padding: 5px !important;
+        }
+        .select2-selection__arrow {
+            height: 36px !important;
         }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
         <div class="container">
-            <a class="navbar-brand" href="/">Sistema de Gerenciamento</a>
+            <a class="navbar-brand" href="/">Gerenciamento de Escalas - Veloci</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -82,7 +86,7 @@
                                 <div class="col-md-3">
                                     <div class="mb-3">
                                         <label class="form-label">Entregador</label>
-                                        <select class="form-select" name="entregador" required>
+                                        <select class="form-select select2-search" name="entregador" required>
                                             <option value="">Selecione um entregador</option>
                                         </select>
                                     </div>
@@ -104,7 +108,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Diárias Temporárias</h2>
+                    <h2>Diárias</h2>
                     <button type="button" class="btn btn-success" onclick="enviarEscala()" id="btnEnviarEscala" disabled>
                         Enviar Escala
                     </button>
@@ -246,6 +250,22 @@
         // Array para armazenar as diárias temporárias
         let diariasTemporarias = [];
 
+        function initializeSelect2() {
+            $('.select2-search').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Selecione ou digite para buscar',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+        }
+
         function carregarDados() {
             console.log('Carregando todos os dados...');
             carregarEmpresas();
@@ -254,6 +274,9 @@
             carregarDiarias();
             carregarFiltroEmpresas();
             {% endif %}
+
+            // Inicializa o Select2 após carregar os dados
+            setTimeout(initializeSelect2, 500);
         }
 
         function carregarEmpresas() {
@@ -301,6 +324,8 @@
                             option.textContent = entregador.nome;
                             select.appendChild(option);
                         });
+                        // Atualiza o Select2 após carregar os dados
+                        $(select).trigger('change');
                     } else {
                         console.error('Elemento select para entregadores não encontrado');
                     }
@@ -422,6 +447,9 @@
                     // Limpa o formulário
                     form.reset();
                     
+                    // Limpa o Select2 do entregador
+                    $('.select2-search').val(null).trigger('change');
+                    
                     // Habilita o botão de enviar escala
                     document.getElementById('btnEnviarEscala').disabled = false;
                 })
@@ -478,45 +506,87 @@
         }
 
         function enviarEscala() {
-            // Envia todas as diárias temporárias para o servidor
-            const promises = diariasTemporarias.map(diaria => {
-                return fetch('/api/diaria', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(diaria)
-                });
-            });
-
-            Promise.all(promises)
-                .then(() => {
-                    // Limpa as diárias temporárias
-                    diariasTemporarias = [];
-                    atualizarTabelaTemporaria();
+            console.log('Enviando escala com', diariasTemporarias.length, 'diárias');
+            
+            // Cria um array para armazenar os resultados
+            let resultados = [];
+            let falhas = [];
+            
+            // Função para enviar uma diária e aguardar sua conclusão
+            async function enviarDiaria(diaria) {
+                try {
+                    const response = await fetch('/api/diaria', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(diaria)
+                    });
                     
-                    // Desabilita o botão de enviar escala
-                    document.getElementById('btnEnviarEscala').disabled = true;
+                    const resultado = await response.json();
+                    if (resultado.status === 'success') {
+                        resultados.push(diaria);
+                    } else {
+                        falhas.push({diaria: diaria, erro: resultado.message});
+                    }
+                } catch (error) {
+                    falhas.push({diaria: diaria, erro: error.message});
+                }
+            }
+            
+            // Função principal assíncrona para enviar todas as diárias em sequência
+            async function enviarTodasDiarias() {
+                console.log('Iniciando envio de diárias...');
+                
+                // Envia as diárias uma por uma
+                for (const diaria of diariasTemporarias) {
+                    await enviarDiaria(diaria);
+                }
+                
+                // Após todas as diárias serem processadas
+                console.log('Diárias registradas:', resultados.length);
+                console.log('Falhas:', falhas.length);
+                
+                if (falhas.length > 0) {
+                    let mensagemErro = 'Algumas diárias não foram registradas:\n\n';
+                    falhas.forEach(f => {
+                        mensagemErro += `- ${f.diaria.entregador} (${f.diaria.empresa}): ${f.erro}\n`;
+                    });
+                    alert(mensagemErro);
+                }
+                
+                if (resultados.length > 0) {
+                    // Limpa apenas as diárias que foram registradas com sucesso
+                    diariasTemporarias = diariasTemporarias.filter(d => 
+                        !resultados.some(r => 
+                            r.data_inicio === d.data_inicio && 
+                            r.entregador === d.entregador && 
+                            r.empresa === d.empresa
+                        )
+                    );
+                    
+                    // Atualiza a interface
+                    atualizarTabelaTemporaria();
+                    if (diariasTemporarias.length === 0) {
+                        document.getElementById('btnEnviarEscala').disabled = true;
+                    }
                     
                     // Recarrega a tabela de diárias registradas
-                    setTimeout(() => {
-                        carregarDiarias();
-                    }, 500); // Pequeno delay para garantir que o servidor processou os dados
+                    setTimeout(carregarDiarias, 500);
                     
-                    alert('Escala enviada com sucesso!');
-                })
-                .catch(error => {
-                    console.error('Erro ao enviar escala:', error);
-                    alert('Erro ao enviar escala. Por favor, tente novamente.');
-                });
+                    // Mostra mensagem de sucesso
+                    alert(`${resultados.length} diária(s) registrada(s) com sucesso!`);
+                }
+            }
+            
+            // Inicia o processo de envio
+            enviarTodasDiarias().catch(error => {
+                console.error('Erro ao enviar diárias:', error);
+                alert('Erro ao enviar diárias. Por favor, tente novamente.');
+            });
         }
 
         function abrirModalExportar() {
-            // Define a data atual como valor máximo para os campos de data
-            const hoje = new Date().toISOString().split('T')[0];
-            document.querySelector('input[name="data_inicial"]').max = hoje;
-            document.querySelector('input[name="data_final"]').max = hoje;
-            
             // Carrega a lista de empresas
             fetch('/api/empresas')
                 .then(response => response.json())

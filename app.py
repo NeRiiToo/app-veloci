@@ -51,7 +51,7 @@ app.secret_key = 'sua_chave_secreta_aqui'  # Necessário para sessões
 EMPRESAS_FILE = 'empresas.csv'
 ENTREGADORES_FILE = 'entregadores.csv'
 ESCALA_FILE = 'modelo escala.xlsx'
-DIARIAS_FILE = 'diarias.xlsx'
+DIARIAS_FILE = os.path.join('data', 'diarias.xlsx')
 USUARIOS_FILE = 'usuarios.csv'
 
 def login_required(f):
@@ -373,12 +373,13 @@ def carregar_escala():
 
 def carregar_diarias():
     try:
-        if os.path.exists(DIARIAS_FILE):
-            df = pd.read_excel(DIARIAS_FILE)
-            print(f"Arquivo de diárias carregado com sucesso. Registros encontrados: {len(df)}")  # Log para debug
+        arquivo_diarias = DIARIAS_FILE
+        if os.path.exists(arquivo_diarias):
+            df = pd.read_excel(arquivo_diarias)
+            print(f"Arquivo de diárias carregado com sucesso. Registros encontrados: {len(df)}")
             return df
         else:
-            print("Arquivo de diárias não encontrado. Criando DataFrame vazio.")  # Log para debug
+            print("Arquivo de diárias não encontrado. Criando DataFrame vazio.")
             return pd.DataFrame(columns=[
                 'Data e hora de início',
                 'Data e hora de fim',
@@ -392,7 +393,7 @@ def carregar_diarias():
                 'Taxa mínima entregador'
             ])
     except Exception as e:
-        print(f"Erro ao carregar arquivo de diárias: {str(e)}")  # Log para debug
+        print(f"Erro ao carregar arquivo de diárias: {str(e)}")
         return pd.DataFrame(columns=[
             'Data e hora de início',
             'Data e hora de fim',
@@ -407,7 +408,19 @@ def carregar_diarias():
         ])
 
 def salvar_diarias(df_diarias):
-    df_diarias.to_excel(DIARIAS_FILE, index=False)
+    try:
+        # Garante que o diretório data existe
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        
+        # Salva o arquivo na pasta data
+        arquivo_diarias = DIARIAS_FILE
+        df_diarias.to_excel(arquivo_diarias, index=False)
+        print(f"Arquivo salvo com sucesso em: {arquivo_diarias}")
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar arquivo de diárias: {str(e)}")
+        return False
 
 @app.route('/')
 @login_required
@@ -765,15 +778,20 @@ def api_diaria():
         else:
             df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
         
-        salvar_diarias(df_diarias)
-        
-        log_action('Diária registrada', session.get('username'), 
-                  f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
-                  f"Período: {data_inicio} até {data_fim}")
-        return jsonify({'status': 'success'})
+        if salvar_diarias(df_diarias):
+            log_action('Diária registrada', session.get('username'), 
+                      f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
+                      f"Período: {data_inicio} até {data_fim}")
+            return jsonify({'status': 'success'})
+        else:
+            erro_msg = "Erro ao salvar diária no arquivo. Verifique as permissões da pasta 'data'."
+            log_error('Erro ao registrar diária', session.get('username'), erro_msg)
+            return jsonify({'status': 'error', 'message': erro_msg}), 500
+            
     except Exception as e:
-        log_error('Erro ao registrar diária', session.get('username'), str(e))
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        erro_msg = str(e)
+        log_error('Erro ao registrar diária', session.get('username'), erro_msg)
+        return jsonify({'status': 'error', 'message': erro_msg}), 500
 
 def log_action(action, username, details=None):
     """
