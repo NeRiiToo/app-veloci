@@ -1,2 +1,3 @@
-nome,veiculo,tipo_valor,minimo_garantido,taxa_total_cobrada,taxa_total_entregador,status
-Cantina Volpi - Paralela,Cantina Volpi - Paralela,unico,N,16.0,13.0,ativo
+nome,veiculo,tipo_valor,minimo_garantido,taxa_total_cobrada,taxa_total_entregador,status,taxa_total_cobrada_fim_semana,taxa_total_entregador_fim_semana,dias_diferentes
+Cantina Volpi - Paralela,Cantina Volpi - Paralela,unico,N,16.0,13.0,ativo,16.0,15.0,"5,6,4"
+Cantina Volpi Lauro,Cantina Volpi Lauro,unico,N,50.0,50.0,ativo,55.0,55.0,"5,6,4"

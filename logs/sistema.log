@@ -33,3 +33,6 @@
 2025-03-28 09:47:55 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
 2025-03-28 09:51:33 - INFO - Ação: Logout - Usuário: Danilo Rebouças
 2025-03-28 09:51:36 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 12:11:13 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cantina Volpi Lauro
+2025-03-28 12:19:57 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi Lauro, Entregador: Adeilton Ferreira Souza , Período: 2025-04-03 12:19:00 até 2025-04-03 18:19:00
+2025-03-28 12:19:57 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi Lauro, Entregador: Adeilton Ferreira Souza , Período: 2025-04-04 12:19:00 até 2025-04-04 18:19:00

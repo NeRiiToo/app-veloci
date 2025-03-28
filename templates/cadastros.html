@@ -85,13 +85,68 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Taxa Total Cobrada (R$)</label>
-                                    <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" required>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Taxa Total Cobrada</label>
+                                        <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" required>
+                                    </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Taxa Total Entregador (R$)</label>
-                                    <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" required>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Taxa Total Entregador</label>
+                                        <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Taxa Total Cobrada (Fim de Semana)</label>
+                                        <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada_fim_semana">
+                                        <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Taxa Total Entregador (Fim de Semana)</label>
+                                        <input type="number" step="0.01" class="form-control" name="taxa_total_entregador_fim_semana">
+                                        <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label">Dias da Semana com Valores Diferentes</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="5" id="sabado">
+                                            <label class="form-check-label" for="sabado">Sábado</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="6" id="domingo">
+                                            <label class="form-check-label" for="domingo">Domingo</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="0" id="segunda">
+                                            <label class="form-check-label" for="segunda">Segunda-feira</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="1" id="terca">
+                                            <label class="form-check-label" for="terca">Terça-feira</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="2" id="quarta">
+                                            <label class="form-check-label" for="quarta">Quarta-feira</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="3" id="quinta">
+                                            <label class="form-check-label" for="quinta">Quinta-feira</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dias_diferentes" value="4" id="sexta">
+                                            <label class="form-check-label" for="sexta">Sexta-feira</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-primary" onclick="cadastrarEmpresa()">Cadastrar Empresa</button>
@@ -137,10 +192,11 @@
                                     <tr>
                                         <th>Nome</th>
                                         <th>Veículo</th>
-                                        <th>Tipo de Valor</th>
+                                        <th>Taxa Cobrada</th>
+                                        <th>Taxa Entregador</th>
+                                        <th>Taxa Cobrada (FDS)</th>
+                                        <th>Taxa Entregador (FDS)</th>
                                         <th>Mínimo Garantido</th>
-                                        <th>Taxa Total Cobrada (R$)</th>
-                                        <th>Taxa Total Entregador (R$)</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
@@ -200,42 +256,67 @@
                             <input type="text" class="form-control" name="veiculo" id="empresa_veiculo" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Tipo de Valor da Diária</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="tipo_valor" id="editar_valor_unico" value="unico" required>
-                                <label class="form-check-label" for="editar_valor_unico">
-                                    Valor Único
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="tipo_valor" id="editar_valor_hora" value="hora" required>
-                                <label class="form-check-label" for="editar_valor_hora">
-                                    Valor por Hora
-                                </label>
-                            </div>
+                            <label class="form-label">Tipo de Valor</label>
+                            <select class="form-select" name="tipo_valor" id="empresa_tipo_valor" required>
+                                <option value="unico">Valor Único</option>
+                                <option value="hora">Valor por Hora</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Mínimo Garantido</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="minimo_garantido" id="editar_minimo_sim" value="S" required>
-                                <label class="form-check-label" for="editar_minimo_sim">
-                                    Sim
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="minimo_garantido" id="editar_minimo_nao" value="N" required>
-                                <label class="form-check-label" for="editar_minimo_nao">
-                                    Não
-                                </label>
-                            </div>
+                            <select class="form-select" name="minimo_garantido" id="empresa_minimo_garantido" required>
+                                <option value="S">Sim</option>
+                                <option value="N">Não</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Taxa Total Cobrada</label>
-                            <input type="number" class="form-control" name="taxa_total_cobrada" id="empresa_taxa_cobrada" step="0.01" required>
+                            <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" id="empresa_taxa_cobrada" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Taxa Total Entregador</label>
-                            <input type="number" class="form-control" name="taxa_total_entregador" id="empresa_taxa_entregador" step="0.01" required>
+                            <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" id="empresa_taxa_entregador" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Taxa Total Cobrada (Fim de Semana)</label>
+                            <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada_fim_semana" id="empresa_taxa_cobrada_fim_semana">
+                            <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Taxa Total Entregador (Fim de Semana)</label>
+                            <input type="number" step="0.01" class="form-control" name="taxa_total_entregador_fim_semana" id="empresa_taxa_entregador_fim_semana">
+                            <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dias da Semana com Valores Diferentes</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="5" id="editar_sabado">
+                                <label class="form-check-label" for="editar_sabado">Sábado</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="6" id="editar_domingo">
+                                <label class="form-check-label" for="editar_domingo">Domingo</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="0" id="editar_segunda">
+                                <label class="form-check-label" for="editar_segunda">Segunda-feira</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="1" id="editar_terca">
+                                <label class="form-check-label" for="editar_terca">Terça-feira</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="2" id="editar_quarta">
+                                <label class="form-check-label" for="editar_quarta">Quarta-feira</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="3" id="editar_quinta">
+                                <label class="form-check-label" for="editar_quinta">Quinta-feira</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="4" id="editar_sexta">
+                                <label class="form-check-label" for="editar_sexta">Sexta-feira</label>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -304,10 +385,11 @@
                         tr.innerHTML = `
                             <td>${empresa.nome || ''}</td>
                             <td>${empresa.veiculo || ''}</td>
-                            <td>${empresa.tipo_valor === 'unico' ? 'Valor Único' : 'Valor por Hora'}</td>
+                            <td>R$ ${parseFloat(empresa.taxa_total_cobrada).toFixed(2)}</td>
+                            <td>R$ ${parseFloat(empresa.taxa_total_entregador).toFixed(2)}</td>
+                            <td>${empresa.taxa_total_cobrada_fim_semana ? `R$ ${parseFloat(empresa.taxa_total_cobrada_fim_semana).toFixed(2)}` : '-'}</td>
+                            <td>${empresa.taxa_total_entregador_fim_semana ? `R$ ${parseFloat(empresa.taxa_total_entregador_fim_semana).toFixed(2)}` : '-'}</td>
                             <td>${empresa.minimo_garantido === 'S' ? 'Sim' : 'Não'}</td>
-                            <td>R$ ${empresa.taxa_total_cobrada || '0.00'}</td>
-                            <td>R$ ${empresa.taxa_total_entregador || '0.00'}</td>
                             <td><span class="badge ${empresa.status === 'ativo' ? 'bg-success' : 'bg-secondary'}">${empresa.status || ''}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-primary" onclick="editarEmpresa('${empresa.nome}')">Editar</button>
@@ -367,6 +449,9 @@
             const form = document.getElementById('empresaForm');
             const formData = new FormData(form);
             
+            // Coleta os dias selecionados
+            const diasDiferentes = Array.from(formData.getAll('dias_diferentes')).map(Number);
+            
             const dados = {
                 tipo: 'empresa',
                 nome: formData.get('nome'),
@@ -374,7 +459,10 @@
                 tipo_valor: formData.get('tipo_valor'),
                 minimo_garantido: formData.get('minimo_garantido'),
                 taxa_total_cobrada: formData.get('taxa_total_cobrada'),
-                taxa_total_entregador: formData.get('taxa_total_entregador')
+                taxa_total_entregador: formData.get('taxa_total_entregador'),
+                taxa_total_cobrada_fim_semana: formData.get('taxa_total_cobrada_fim_semana'),
+                taxa_total_entregador_fim_semana: formData.get('taxa_total_entregador_fim_semana'),
+                dias_diferentes: diasDiferentes
             };
 
             fetch('/api/cadastrar', {
@@ -443,19 +531,25 @@
                         document.getElementById('empresa_id').value = empresa.nome;
                         document.getElementById('empresa_nome').value = empresa.nome;
                         document.getElementById('empresa_veiculo').value = empresa.veiculo;
+                        document.getElementById('empresa_tipo_valor').value = empresa.tipo_valor;
+                        document.getElementById('empresa_minimo_garantido').value = empresa.minimo_garantido;
                         document.getElementById('empresa_taxa_cobrada').value = empresa.taxa_total_cobrada;
                         document.getElementById('empresa_taxa_entregador').value = empresa.taxa_total_entregador;
+                        document.getElementById('empresa_taxa_cobrada_fim_semana').value = empresa.taxa_total_cobrada_fim_semana || '';
+                        document.getElementById('empresa_taxa_entregador_fim_semana').value = empresa.taxa_total_entregador_fim_semana || '';
                         
-                        if (empresa.tipo_valor === 'unico') {
-                            document.getElementById('editar_valor_unico').checked = true;
-                        } else {
-                            document.getElementById('editar_valor_hora').checked = true;
-                        }
+                        // Limpa todos os checkboxes primeiro
+                        document.querySelectorAll('input[name="dias_diferentes"]').forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
                         
-                        if (empresa.minimo_garantido === 'S') {
-                            document.getElementById('editar_minimo_sim').checked = true;
-                        } else {
-                            document.getElementById('editar_minimo_nao').checked = true;
+                        // Marca os checkboxes dos dias diferentes
+                        if (empresa.dias_diferentes) {
+                            const diasDiferentes = empresa.dias_diferentes.split(',').map(Number);
+                            diasDiferentes.forEach(dia => {
+                                const checkbox = document.querySelector(`input[name="dias_diferentes"][value="${dia}"]`);
+                                if (checkbox) checkbox.checked = true;
+                            });
                         }
                         
                         $('#editarEmpresaModal').modal('show');
@@ -472,17 +566,20 @@
             const form = document.getElementById('editarEmpresaForm');
             const formData = new FormData(form);
             
-            const tipoValor = document.querySelector('input[name="tipo_valor"]:checked').value;
-            const minimoGarantido = document.querySelector('input[name="minimo_garantido"]:checked').value;
+            // Coleta os dias selecionados
+            const diasDiferentes = Array.from(formData.getAll('dias_diferentes')).map(Number);
             
             const dados = {
                 id: formData.get('id'),
                 nome: formData.get('nome'),
                 veiculo: formData.get('veiculo'),
-                tipo_valor: tipoValor,
-                minimo_garantido: minimoGarantido,
+                tipo_valor: formData.get('tipo_valor'),
+                minimo_garantido: formData.get('minimo_garantido'),
                 taxa_total_cobrada: formData.get('taxa_total_cobrada'),
-                taxa_total_entregador: formData.get('taxa_total_entregador')
+                taxa_total_entregador: formData.get('taxa_total_entregador'),
+                taxa_total_cobrada_fim_semana: formData.get('taxa_total_cobrada_fim_semana') || null,
+                taxa_total_entregador_fim_semana: formData.get('taxa_total_entregador_fim_semana') || null,
+                dias_diferentes: diasDiferentes
             };
 
             console.log('Dados para edição:', dados);

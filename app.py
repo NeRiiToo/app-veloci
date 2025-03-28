@@ -462,6 +462,9 @@ def api_cadastrar():
                 'minimo_garantido': data['minimo_garantido'],
                 'taxa_total_cobrada': float(data['taxa_total_cobrada']),
                 'taxa_total_entregador': float(data['taxa_total_entregador']),
+                'taxa_total_cobrada_fim_semana': float(data['taxa_total_cobrada_fim_semana']) if data.get('taxa_total_cobrada_fim_semana') else None,
+                'taxa_total_entregador_fim_semana': float(data['taxa_total_entregador_fim_semana']) if data.get('taxa_total_entregador_fim_semana') else None,
+                'dias_diferentes': ','.join(map(str, data.get('dias_diferentes', []))),
                 'status': 'ativo'
             }
             
@@ -505,6 +508,12 @@ def api_editar_empresa():
         data = request.get_json()
         df = pd.DataFrame(carregar_empresas())
         
+        # Verifica se a empresa existe
+        if data['id'] not in df['nome'].values:
+            log_action('Tentativa de edição de empresa - Empresa não encontrada', 
+                      session.get('username'), f"ID: {data['id']}")
+            return jsonify({'status': 'error', 'message': 'Empresa não encontrada'})
+        
         idx = df[df['nome'] == data['id']].index[0]
         
         # Registra os valores antigos para o log
@@ -515,17 +524,42 @@ def api_editar_empresa():
         df.loc[idx, 'veiculo'] = data['veiculo']
         df.loc[idx, 'tipo_valor'] = data['tipo_valor']
         df.loc[idx, 'minimo_garantido'] = data['minimo_garantido']
-        df.loc[idx, 'taxa_total_cobrada'] = data['taxa_total_cobrada']
-        df.loc[idx, 'taxa_total_entregador'] = data['taxa_total_entregador']
-        df.loc[idx, 'status'] = 'ativo'
+        df.loc[idx, 'taxa_total_cobrada'] = float(data['taxa_total_cobrada'])
+        df.loc[idx, 'taxa_total_entregador'] = float(data['taxa_total_entregador'])
         
+        # Processa as taxas de fim de semana
+        taxa_cobrada_fim_semana = data.get('taxa_total_cobrada_fim_semana')
+        taxa_entregador_fim_semana = data.get('taxa_total_entregador_fim_semana')
+        
+        if taxa_cobrada_fim_semana:
+            df.loc[idx, 'taxa_total_cobrada_fim_semana'] = float(taxa_cobrada_fim_semana)
+        else:
+            df.loc[idx, 'taxa_total_cobrada_fim_semana'] = None
+            
+        if taxa_entregador_fim_semana:
+            df.loc[idx, 'taxa_total_entregador_fim_semana'] = float(taxa_entregador_fim_semana)
+        else:
+            df.loc[idx, 'taxa_total_entregador_fim_semana'] = None
+        
+        # Processa os dias diferentes
+        dias_diferentes = data.get('dias_diferentes', [])
+        if isinstance(dias_diferentes, list):
+            df.loc[idx, 'dias_diferentes'] = ','.join(map(str, dias_diferentes))
+        else:
+            df.loc[idx, 'dias_diferentes'] = ''
+        
+        # Salva as alterações
         salvar_empresas(df)
         
         # Registra as alterações no log
         alteracoes = []
-        for campo in ['nome', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador']:
-            if str(empresa_antiga[campo]) != str(data[campo]):
-                alteracoes.append(f"{campo}: {empresa_antiga[campo]} -> {data[campo]}")
+        for campo in ['nome', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 
+                     'taxa_total_entregador', 'taxa_total_cobrada_fim_semana', 
+                     'taxa_total_entregador_fim_semana', 'dias_diferentes']:
+            valor_antigo = str(empresa_antiga.get(campo, ''))
+            valor_novo = str(data.get(campo, ''))
+            if valor_antigo != valor_novo:
+                alteracoes.append(f"{campo}: {valor_antigo} -> {valor_novo}")
         
         log_action('Empresa editada', session.get('username'), 
                   f"Nome: {data['nome']}, Alterações: {', '.join(alteracoes)}")
@@ -744,6 +778,38 @@ def get_diarias():
         print(f"Erro ao obter diárias: {str(e)}")  # Log para debug
         return jsonify([])
 
+def processar_taxas_empresa(empresa, data_inicio):
+    try:
+        # Converte a data de início para objeto datetime
+        data = datetime.strptime(data_inicio, '%Y-%m-%d %H:%M:%S')
+        dia_semana = data.weekday()  # 0 = segunda, 6 = domingo
+        
+        # Verifica se o dia da semana está na lista de dias diferentes
+        dias_diferentes = empresa.get('dias_diferentes', [])
+        if isinstance(dias_diferentes, str):
+            # Se for string, converte para lista de números
+            dias_diferentes = [int(d) for d in dias_diferentes.split(',') if d.isdigit()]
+        
+        if dia_semana in dias_diferentes:
+            taxa_total_cobrada = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
+            taxa_total_entregador = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
+        else:
+            taxa_total_cobrada = float(empresa['taxa_total_cobrada'])
+            taxa_total_entregador = float(empresa['taxa_total_entregador'])
+            
+        return {
+            'taxa_total_cobrada': taxa_total_cobrada,
+            'taxa_total_entregador': taxa_total_entregador,
+            'minimo_garantido': empresa['minimo_garantido']
+        }
+    except Exception as e:
+        print(f"Erro ao processar taxas da empresa: {str(e)}")
+        return {
+            'taxa_total_cobrada': 0.0,
+            'taxa_total_entregador': 0.0,
+            'minimo_garantido': 'N'
+        }
+
 @app.route('/api/diaria', methods=['POST'])
 def api_diaria():
     try:
@@ -758,6 +824,9 @@ def api_diaria():
         data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
         data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
         
+        # Processa as taxas considerando o dia da semana
+        taxas = processar_taxas_empresa(empresa, data_inicio)
+        
         nova_diaria = {
             'Data e hora de início': data_inicio,
             'Data e hora de fim': data_fim,
@@ -765,10 +834,10 @@ def api_diaria():
             'Tipo Veiculo': data['veiculo'],
             'Entregador': data['entregador'],
             'CPF': entregador['cpf'],
-            'Taxa total cobrada': float(empresa['taxa_total_cobrada']),
-            'Taxa total entregador': float(empresa['taxa_total_entregador']),
-            'Taxa mínima cobrada': 'S' if empresa['minimo_garantido'] == 'S' else 'N',
-            'Taxa mínima entregador': 'S' if empresa['minimo_garantido'] == 'S' else 'N'
+            'Taxa total cobrada': taxas['taxa_total_cobrada'],
+            'Taxa total entregador': taxas['taxa_total_entregador'],
+            'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
+            'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N'
         }
         
         df_diarias = carregar_diarias()
@@ -792,6 +861,71 @@ def api_diaria():
         erro_msg = str(e)
         log_error('Erro ao registrar diária', session.get('username'), erro_msg)
         return jsonify({'status': 'error', 'message': erro_msg}), 500
+
+@app.route('/api/empresa', methods=['POST'])
+def api_empresa():
+    try:
+        data = request.get_json()
+        
+        # Carrega as empresas existentes
+        df_empresas = carregar_empresas()
+        
+        # Verifica se a empresa já existe
+        if data['nome'] in df_empresas['nome'].values:
+            return jsonify({'status': 'error', 'message': 'Empresa já existe'})
+        
+        # Cria um novo registro
+        nova_empresa = {
+            'nome': data['nome'],
+            'veiculo': data['veiculo'],
+            'tipo_valor': 'unico',  # Mantido para compatibilidade
+            'minimo_garantido': data['minimo_garantido'],
+            'taxa_total_cobrada': float(data['taxa_total_cobrada']),
+            'taxa_total_entregador': float(data['taxa_total_entregador']),
+            'taxa_total_cobrada_fim_semana': float(data['taxa_total_cobrada_fim_semana']) if data.get('taxa_total_cobrada_fim_semana') else None,
+            'taxa_total_entregador_fim_semana': float(data['taxa_total_entregador_fim_semana']) if data.get('taxa_total_entregador_fim_semana') else None,
+            'dias_diferentes': ','.join(map(str, data.get('dias_diferentes', []))),
+            'status': 'ativo'
+        }
+        
+        # Adiciona a nova empresa ao DataFrame
+        df_empresas = pd.concat([df_empresas, pd.DataFrame([nova_empresa])], ignore_index=True)
+        
+        # Salva as empresas
+        salvar_empresas(df_empresas)
+        
+        log_action('Empresa cadastrada', session.get('username'), f"Empresa: {data['nome']}")
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        log_error('Erro ao cadastrar empresa', session.get('username'), str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/empresa/<nome>', methods=['PUT'])
+def atualizar_empresa(nome):
+    try:
+        data = request.get_json()
+        df_empresas = carregar_empresas()
+        
+        # Encontra o índice da empresa
+        idx = df_empresas[df_empresas['nome'] == nome].index[0]
+        
+        # Atualiza os dados da empresa
+        df_empresas.at[idx, 'veiculo'] = data['veiculo']
+        df_empresas.at[idx, 'minimo_garantido'] = data['minimo_garantido']
+        df_empresas.at[idx, 'taxa_total_cobrada'] = float(data['taxa_total_cobrada'])
+        df_empresas.at[idx, 'taxa_total_entregador'] = float(data['taxa_total_entregador'])
+        df_empresas.at[idx, 'taxa_total_cobrada_fim_semana'] = float(data['taxa_total_cobrada_fim_semana']) if data.get('taxa_total_cobrada_fim_semana') else None
+        df_empresas.at[idx, 'taxa_total_entregador_fim_semana'] = float(data['taxa_total_entregador_fim_semana']) if data.get('taxa_total_entregador_fim_semana') else None
+        df_empresas.at[idx, 'dias_diferentes'] = ','.join(map(str, data.get('dias_diferentes', [])))
+        
+        # Salva as alterações
+        salvar_empresas(df_empresas)
+        
+        log_action('Empresa atualizada', session.get('username'), f"Empresa: {nome}")
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        log_error('Erro ao atualizar empresa', session.get('username'), str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 def log_action(action, username, details=None):
     """
