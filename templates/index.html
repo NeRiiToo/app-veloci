@@ -8,15 +8,197 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <style>
+        /* Estilos gerais */
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 20px;
+        }
+
+        /* Select2 responsivo */
         .select2-container {
             width: 100% !important;
         }
+
         .select2-selection {
             height: 38px !important;
             padding: 5px !important;
         }
+
         .select2-selection__arrow {
             height: 36px !important;
+        }
+
+        /* Ajustes para cards */
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Tabelas responsivas */
+        .table-responsive {
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+
+        /* Botões e interações */
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Loading states */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .loading:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 1rem;
+            height: 1rem;
+            margin: -0.5rem;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .card-body {
+                padding: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                border-radius: 5px !important;
+                margin-bottom: 5px;
+            }
+
+            /* Ajustes para tabelas em telas pequenas */
+            .table-responsive table {
+                display: block;
+            }
+
+            .table-responsive table thead {
+                display: none;
+            }
+
+            .table-responsive table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #dee2e6;
+                border-radius: 5px;
+                background-color: #fff;
+            }
+
+            .table-responsive table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+            .table-responsive table tbody td:last-child {
+                border-bottom: none;
+            }
+
+            .table-responsive table tbody td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                margin-right: 1rem;
+            }
+
+            /* Ajustes para filtros */
+            .filters .row > div {
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 576px) {
+            h1, h2, h3, h4, h5 {
+                font-size: 1.2rem;
+                margin-bottom: 15px;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            .navbar {
+                padding: 8px 0;
+            }
+
+            .navbar-nav {
+                margin-top: 10px;
+            }
+
+            /* Ajustes para inputs em telas pequenas */
+            input.form-control,
+            select.form-select {
+                font-size: 16px;
+                height: 44px;
+            }
+
+            /* Ajustes para modais em telas pequenas */
+            .modal-content {
+                border-radius: 10px;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            /* Ajustes para datas */
+            input[type="datetime-local"] {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -387,15 +569,15 @@
                     try {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td>${formatarDataHora(diaria['Data e hora de início'] || '')}</td>
-                            <td>${formatarDataHora(diaria['Data e hora de fim'] || '')}</td>
-                            <td>${diaria['Empresa'] || ''}</td>
-                            <td>${diaria['Tipo Veiculo'] || ''}</td>
-                            <td>${diaria['Entregador'] || ''}</td>
-                            <td>${diaria['CPF'] || ''}</td>
-                            <td>R$ ${typeof diaria['Taxa total cobrada'] === 'number' ? diaria['Taxa total cobrada'].toFixed(2) : '0.00'}</td>
-                            <td>R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
-                            <td>${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
+                            <td data-label="Data e Hora de Início">${formatarDataHora(diaria['Data e hora de início'] || '')}</td>
+                            <td data-label="Data e Hora de Fim">${formatarDataHora(diaria['Data e hora de fim'] || '')}</td>
+                            <td data-label="Empresa">${diaria['Empresa'] || ''}</td>
+                            <td data-label="Tipo Veículo">${diaria['Tipo Veiculo'] || ''}</td>
+                            <td data-label="Entregador">${diaria['Entregador'] || ''}</td>
+                            <td data-label="CPF">${diaria['CPF'] || ''}</td>
+                            <td data-label="Taxa Total Cobrada">R$ ${typeof diaria['Taxa total cobrada'] === 'number' ? diaria['Taxa total cobrada'].toFixed(2) : '0.00'}</td>
+                            <td data-label="Taxa Total Entregador">R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
+                            <td data-label="Mínimo Garantido">${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
                         `;
                         tbody.appendChild(tr);
                     } catch (err) {
@@ -475,11 +657,11 @@
             diariasOrdenadas.forEach((diaria, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${formatarDataHora(diaria.data_inicio)}</td>
-                    <td>${formatarDataHora(diaria.data_fim)}</td>
-                    <td>${diaria.empresa}</td>
-                    <td>${diaria.entregador}</td>
-                    <td>
+                    <td data-label="Data e Hora de Início">${formatarDataHora(diaria.data_inicio)}</td>
+                    <td data-label="Data e Hora de Fim">${formatarDataHora(diaria.data_fim)}</td>
+                    <td data-label="Empresa">${diaria.empresa}</td>
+                    <td data-label="Entregador">${diaria.entregador}</td>
+                    <td data-label="Ações">
                         <button class="btn btn-sm btn-danger" onclick="removerDiariaTemporaria(${index})">
                             Remover
                         </button>

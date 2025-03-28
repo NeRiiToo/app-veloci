@@ -1,21 +1,276 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastros - Gerenciamento de Escalas</title>
+    <title>Cadastros - Veloci</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <style>
+        /* Estilos gerais */
+        body {
+            padding-bottom: 20px;
+        }
+
+        /* Responsividade das tabelas */
+        .table-responsive {
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+
+        /* Ajustes para cards */
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Ajustes para formulários */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .card-body {
+                padding: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                border-radius: 5px !important;
+                margin-bottom: 5px;
+            }
+
+            .table {
+                font-size: 14px;
+            }
+
+            .modal-dialog {
+                margin: 10px;
+            }
+
+            /* Ajustes para tabelas responsivas em telas pequenas */
+            .table-responsive table {
+                display: block;
+            }
+
+            .table-responsive table thead {
+                display: none;
+            }
+
+            .table-responsive table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #dee2e6;
+                border-radius: 5px;
+                background-color: #fff;
+            }
+
+            .table-responsive table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+            .table-responsive table tbody td:last-child {
+                border-bottom: none;
+            }
+
+            .table-responsive table tbody td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                margin-right: 1rem;
+            }
+
+            /* Ajustes para modais em telas pequenas */
+            .modal-content {
+                border-radius: 10px;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 576px) {
+            h1, h2, h3 {
+                font-size: 1.5rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            .form-label {
+                font-size: 14px;
+            }
+
+            .table td, .table th {
+                padding: 0.5rem;
+            }
+
+            /* Ajustes para navegação */
+            .nav-tabs {
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                -ms-overflow-style: -ms-autohiding-scrollbar;
+            }
+
+            .nav-tabs .nav-item {
+                flex: 0 0 auto;
+            }
+
+            .nav-tabs .nav-link {
+                white-space: nowrap;
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        /* Select2 responsivo */
         .select2-container {
             width: 100% !important;
         }
+
+        /* Estilo para checkboxes dos dias da semana */
+        .dias-semana {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .dias-semana .form-check {
+            margin-right: 15px;
+        }
+
+        @media (max-width: 576px) {
+            .dias-semana {
+                gap: 5px;
+            }
+
+            .dias-semana .form-check {
+                margin-right: 10px;
+                font-size: 14px;
+            }
+
+            /* Ajustes para inputs em telas pequenas */
+            input.form-control,
+            select.form-select {
+                font-size: 16px; /* Evita zoom em iPhones */
+                height: 44px; /* Altura maior para melhor toque */
+            }
+
+            /* Ajustes para botões em telas pequenas */
+            .btn {
+                padding: 10px 15px;
+                font-size: 16px;
+                height: 44px;
+            }
+
+            /* Ajustes para badges em telas pequenas */
+            .badge {
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+        }
+
+        /* Animações */
+        .fade-enter {
+            opacity: 0;
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+            transition: opacity 300ms ease-in;
+        }
+
+        .fade-exit {
+            opacity: 1;
+        }
+
+        .fade-exit-active {
+            opacity: 0;
+            transition: opacity 300ms ease-in;
+        }
+
+        /* Melhorias visuais */
         .card {
-            margin-bottom: 20px;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Loading states */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .loading:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 1rem;
+            height: 1rem;
+            margin: -0.5rem;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <!-- Navbar responsiva -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
         <div class="container">
             <a class="navbar-brand" href="/">Gerenciamento de Escalas - Veloci</a>
@@ -53,75 +308,74 @@
     </nav>
 
     <div class="container">
-        <div class="row align-items-stretch">
-            <!-- Formulário de Cadastro de Empresa -->
-            <div class="col-md-6">
+        <!-- Abas responsivas -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="empresas-tab" data-bs-toggle="tab" data-bs-target="#empresas" type="button" role="tab">
+                    Empresas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="entregadores-tab" data-bs-toggle="tab" data-bs-target="#entregadores" type="button" role="tab">
+                    Entregadores
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <!-- Aba de Empresas -->
+            <div class="tab-pane fade show active" id="empresas" role="tabpanel">
+                <!-- Formulário de Cadastro de Empresa -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Cadastro de Empresa</h5>
                     </div>
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body">
                         <form id="empresaForm">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
                                     <label class="form-label">Nome da Empresa</label>
                                     <input type="text" class="form-control" name="nome" required>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12 col-md-6">
                                     <label class="form-label">Tipo de Veículo</label>
                                     <input type="text" class="form-control" name="veiculo" required>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12 col-md-6">
                                     <label class="form-label">Tipo de Valor</label>
                                     <select class="form-select" name="tipo_valor" required>
                                         <option value="unico">Valor Único</option>
                                         <option value="hora">Valor por Hora</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12 col-md-6">
                                     <label class="form-label">Mínimo Garantido</label>
                                     <select class="form-select" name="minimo_garantido" required>
                                         <option value="S">Sim</option>
                                         <option value="N">Não</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Taxa Total Cobrada</label>
-                                        <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" required>
-                                    </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Taxa Total Cobrada</label>
+                                    <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Taxa Total Entregador</label>
-                                        <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" required>
-                                    </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Taxa Total Entregador</label>
+                                    <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" required>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Taxa Total Cobrada (Fim de Semana)</label>
-                                        <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada_fim_semana">
-                                        <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
-                                    </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Taxa Total Cobrada (Fim de Semana)</label>
+                                    <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada_fim_semana">
+                                    <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Taxa Total Entregador (Fim de Semana)</label>
-                                        <input type="number" step="0.01" class="form-control" name="taxa_total_entregador_fim_semana">
-                                        <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
-                                    </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Taxa Total Entregador (Fim de Semana)</label>
+                                    <input type="number" step="0.01" class="form-control" name="taxa_total_entregador_fim_semana">
+                                    <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
                                 </div>
-                            </div>
-                            <div class="row">
                                 <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Dias da Semana com Valores Diferentes</label>
+                                    <label class="form-label">Dias da Semana com Valores Diferentes</label>
+                                    <div class="dias-semana">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="dias_diferentes" value="5" id="sabado">
                                             <label class="form-check-label" for="sabado">Sábado</label>
@@ -152,39 +406,15 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="cadastrarEmpresa()">Cadastrar Empresa</button>
+                                </div>
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="cadastrarEmpresa()">Cadastrar Empresa</button>
                         </form>
                     </div>
                 </div>
-            </div>
 
-            <!-- Formulário de Cadastro de Entregador -->
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Cadastro de Entregador</h5>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                        <form id="entregadorForm">
-                            <div class="mb-3">
-                                <label class="form-label">Nome do Entregador</label>
-                                <input type="text" class="form-control" name="nome" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">CPF</label>
-                                <input type="text" class="form-control" name="cpf" required>
-                            </div>
-                            <button type="button" class="btn btn-primary" onclick="cadastrarEntregador()">Cadastrar Entregador</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lista de Empresas -->
-        <div class="row">
-            <div class="col-12">
+                <!-- Lista de Empresas -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Empresas Cadastradas</h5>
@@ -211,11 +441,34 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Lista de Entregadores -->
-        <div class="row">
-            <div class="col-12">
+            <!-- Aba de Entregadores -->
+            <div class="tab-pane fade" id="entregadores" role="tabpanel">
+                <!-- Formulário de Cadastro de Entregador -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Cadastro de Entregador</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="entregadorForm">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Nome do Entregador</label>
+                                    <input type="text" class="form-control" name="nome" required>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">CPF</label>
+                                    <input type="text" class="form-control" name="cpf" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="cadastrarEntregador()">Cadastrar Entregador</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lista de Entregadores -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Entregadores Cadastrados</h5>
@@ -242,7 +495,7 @@
 
     <!-- Modal Editar Empresa -->
     <div class="modal fade" id="editarEmpresaModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Editar Empresa</h5>
@@ -251,75 +504,79 @@
                 <div class="modal-body">
                     <form id="editarEmpresaForm">
                         <input type="hidden" name="id" id="empresa_id">
-                        <div class="mb-3">
-                            <label class="form-label">Nome da Empresa</label>
-                            <input type="text" class="form-control" name="nome" id="empresa_nome" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Tipo de Veículo</label>
-                            <input type="text" class="form-control" name="veiculo" id="empresa_veiculo" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Tipo de Valor</label>
-                            <select class="form-select" name="tipo_valor" id="empresa_tipo_valor" required>
-                                <option value="unico">Valor Único</option>
-                                <option value="hora">Valor por Hora</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Mínimo Garantido</label>
-                            <select class="form-select" name="minimo_garantido" id="empresa_minimo_garantido" required>
-                                <option value="S">Sim</option>
-                                <option value="N">Não</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Taxa Total Cobrada</label>
-                            <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" id="empresa_taxa_cobrada" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Taxa Total Entregador</label>
-                            <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" id="empresa_taxa_entregador" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Taxa Total Cobrada (Fim de Semana)</label>
-                            <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada_fim_semana" id="empresa_taxa_cobrada_fim_semana">
-                            <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Taxa Total Entregador (Fim de Semana)</label>
-                            <input type="number" step="0.01" class="form-control" name="taxa_total_entregador_fim_semana" id="empresa_taxa_entregador_fim_semana">
-                            <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Dias da Semana com Valores Diferentes</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="5" id="editar_sabado">
-                                <label class="form-check-label" for="editar_sabado">Sábado</label>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Nome da Empresa</label>
+                                <input type="text" class="form-control" name="nome" id="empresa_nome" required>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="6" id="editar_domingo">
-                                <label class="form-check-label" for="editar_domingo">Domingo</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Tipo de Veículo</label>
+                                <input type="text" class="form-control" name="veiculo" id="empresa_veiculo" required>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="0" id="editar_segunda">
-                                <label class="form-check-label" for="editar_segunda">Segunda-feira</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Tipo de Valor</label>
+                                <select class="form-select" name="tipo_valor" id="empresa_tipo_valor" required>
+                                    <option value="unico">Valor Único</option>
+                                    <option value="hora">Valor por Hora</option>
+                                </select>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="1" id="editar_terca">
-                                <label class="form-check-label" for="editar_terca">Terça-feira</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Mínimo Garantido</label>
+                                <select class="form-select" name="minimo_garantido" id="empresa_minimo_garantido" required>
+                                    <option value="S">Sim</option>
+                                    <option value="N">Não</option>
+                                </select>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="2" id="editar_quarta">
-                                <label class="form-check-label" for="editar_quarta">Quarta-feira</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Taxa Total Cobrada</label>
+                                <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada" id="empresa_taxa_cobrada" required>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="3" id="editar_quinta">
-                                <label class="form-check-label" for="editar_quinta">Quinta-feira</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Taxa Total Entregador</label>
+                                <input type="number" step="0.01" class="form-control" name="taxa_total_entregador" id="empresa_taxa_entregador" required>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="dias_diferentes" value="4" id="editar_sexta">
-                                <label class="form-check-label" for="editar_sexta">Sexta-feira</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Taxa Total Cobrada (Fim de Semana)</label>
+                                <input type="number" step="0.01" class="form-control" name="taxa_total_cobrada_fim_semana" id="empresa_taxa_cobrada_fim_semana">
+                                <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Taxa Total Entregador (Fim de Semana)</label>
+                                <input type="number" step="0.01" class="form-control" name="taxa_total_entregador_fim_semana" id="empresa_taxa_entregador_fim_semana">
+                                <small class="text-muted">Deixe em branco para usar a mesma taxa dos dias úteis</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Dias da Semana com Valores Diferentes</label>
+                                <div class="dias-semana">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="5" id="editar_sabado">
+                                        <label class="form-check-label" for="editar_sabado">Sábado</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="6" id="editar_domingo">
+                                        <label class="form-check-label" for="editar_domingo">Domingo</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="0" id="editar_segunda">
+                                        <label class="form-check-label" for="editar_segunda">Segunda-feira</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="1" id="editar_terca">
+                                        <label class="form-check-label" for="editar_terca">Terça-feira</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="2" id="editar_quarta">
+                                        <label class="form-check-label" for="editar_quarta">Quarta-feira</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="3" id="editar_quinta">
+                                        <label class="form-check-label" for="editar_quinta">Quinta-feira</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dias_diferentes" value="4" id="editar_sexta">
+                                        <label class="form-check-label" for="editar_sexta">Sexta-feira</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -343,13 +600,15 @@
                 <div class="modal-body">
                     <form id="editarEntregadorForm">
                         <input type="hidden" name="id" id="entregador_id">
-                        <div class="mb-3">
-                            <label class="form-label">Nome Completo</label>
-                            <input type="text" class="form-control" name="nome" id="entregador_nome" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">CPF</label>
-                            <input type="text" class="form-control" name="cpf" id="entregador_cpf" required>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" name="nome" id="entregador_nome" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">CPF</label>
+                                <input type="text" class="form-control" name="cpf" id="entregador_cpf" required>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -363,13 +622,67 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Inicializa o Select2 e os componentes Bootstrap
+        $(document).ready(function() {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            // Inicializa as abas
+            var tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabEls.forEach(function(tabEl) {
+                new bootstrap.Tab(tabEl);
+            });
+
+            // Carrega os dados iniciais
+            carregarDados();
+
+            // Adiciona event listeners para os formulários
+            document.getElementById('empresaForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                cadastrarEmpresa();
+            });
+
+            document.getElementById('entregadorForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                cadastrarEntregador();
+            });
+
+            // Ajusta tabelas em telas pequenas
+            ajustarTabelasResponsivas();
+        });
+
+        // Função para ajustar tabelas em telas pequenas
+        function ajustarTabelasResponsivas() {
+            if (window.innerWidth < 768) {
+                const tabelas = document.querySelectorAll('.table');
+                tabelas.forEach(tabela => {
+                    const headers = Array.from(tabela.querySelectorAll('th')).map(th => th.textContent);
+                    const rows = tabela.querySelectorAll('tbody tr');
+                    
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        cells.forEach((cell, index) => {
+                            if (headers[index]) {
+                                cell.setAttribute('data-label', headers[index]);
+                            }
+                        });
+                    });
+                });
+            }
+        }
+
+        // Função para carregar dados
         function carregarDados() {
             console.log('Carregando dados...');
             carregarEmpresas();
             carregarEntregadores();
         }
 
+        // Função para carregar empresas
         function carregarEmpresas() {
             console.log('Carregando empresas...');
             fetch('/api/empresas')
@@ -387,24 +700,27 @@
                             tr.classList.add('table-secondary');
                         }
                         tr.innerHTML = `
-                            <td>${empresa.nome || ''}</td>
-                            <td>${empresa.veiculo || ''}</td>
-                            <td>R$ ${parseFloat(empresa.taxa_total_cobrada).toFixed(2)}</td>
-                            <td>R$ ${parseFloat(empresa.taxa_total_entregador).toFixed(2)}</td>
-                            <td>${empresa.taxa_total_cobrada_fim_semana ? `R$ ${parseFloat(empresa.taxa_total_cobrada_fim_semana).toFixed(2)}` : '-'}</td>
-                            <td>${empresa.taxa_total_entregador_fim_semana ? `R$ ${parseFloat(empresa.taxa_total_entregador_fim_semana).toFixed(2)}` : '-'}</td>
-                            <td>${empresa.minimo_garantido === 'S' ? 'Sim' : 'Não'}</td>
-                            <td><span class="badge ${empresa.status === 'ativo' ? 'bg-success' : 'bg-secondary'}">${empresa.status || ''}</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarEmpresa('${empresa.nome}')">Editar</button>
-                                <button class="btn btn-sm ${empresa.status === 'ativo' ? 'btn-danger' : 'btn-success'}" 
-                                    onclick="excluirEmpresa('${empresa.nome}')">
-                                    ${empresa.status === 'ativo' ? 'Desativar' : 'Ativar'}
-                                </button>
+                            <td data-label="Nome">${empresa.nome || ''}</td>
+                            <td data-label="Veículo">${empresa.veiculo || ''}</td>
+                            <td data-label="Taxa Cobrada">R$ ${parseFloat(empresa.taxa_total_cobrada).toFixed(2)}</td>
+                            <td data-label="Taxa Entregador">R$ ${parseFloat(empresa.taxa_total_entregador).toFixed(2)}</td>
+                            <td data-label="Taxa Cobrada (FDS)">${empresa.taxa_total_cobrada_fim_semana ? `R$ ${parseFloat(empresa.taxa_total_cobrada_fim_semana).toFixed(2)}` : '-'}</td>
+                            <td data-label="Taxa Entregador (FDS)">${empresa.taxa_total_entregador_fim_semana ? `R$ ${parseFloat(empresa.taxa_total_entregador_fim_semana).toFixed(2)}` : '-'}</td>
+                            <td data-label="Mínimo Garantido">${empresa.minimo_garantido === 'S' ? 'Sim' : 'Não'}</td>
+                            <td data-label="Status"><span class="badge ${empresa.status === 'ativo' ? 'bg-success' : 'bg-secondary'}">${empresa.status || ''}</span></td>
+                            <td data-label="Ações">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-primary" onclick="editarEmpresa('${empresa.nome}')">Editar</button>
+                                    <button class="btn btn-sm ${empresa.status === 'ativo' ? 'btn-danger' : 'btn-success'}" 
+                                        onclick="excluirEmpresa('${empresa.nome}')">
+                                        ${empresa.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                                    </button>
+                                </div>
                             </td>
                         `;
                         tbody.appendChild(tr);
                     });
+                    ajustarTabelasResponsivas();
                 })
                 .catch(error => {
                     console.error('Erro ao carregar empresas:', error);
@@ -412,6 +728,7 @@
                 });
         }
 
+        // Função para carregar entregadores
         function carregarEntregadores() {
             console.log('Carregando entregadores...');
             fetch('/api/entregadores')
@@ -429,19 +746,22 @@
                             tr.classList.add('table-secondary');
                         }
                         tr.innerHTML = `
-                            <td>${entregador.nome || ''}</td>
-                            <td>${entregador.cpf || ''}</td>
-                            <td><span class="badge ${entregador.status === 'ativo' ? 'bg-success' : 'bg-secondary'}">${entregador.status || ''}</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarEntregador('${entregador.nome}')">Editar</button>
-                                <button class="btn btn-sm ${entregador.status === 'ativo' ? 'btn-danger' : 'btn-success'}" 
-                                    onclick="excluirEntregador('${entregador.nome}')">
-                                    ${entregador.status === 'ativo' ? 'Desativar' : 'Ativar'}
-                                </button>
+                            <td data-label="Nome">${entregador.nome || ''}</td>
+                            <td data-label="CPF">${entregador.cpf || ''}</td>
+                            <td data-label="Status"><span class="badge ${entregador.status === 'ativo' ? 'bg-success' : 'bg-secondary'}">${entregador.status || ''}</span></td>
+                            <td data-label="Ações">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-primary" onclick="editarEntregador('${entregador.nome}')">Editar</button>
+                                    <button class="btn btn-sm ${entregador.status === 'ativo' ? 'btn-danger' : 'btn-success'}" 
+                                        onclick="excluirEntregador('${entregador.nome}')">
+                                        ${entregador.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                                    </button>
+                                </div>
                             </td>
                         `;
                         tbody.appendChild(tr);
                     });
+                    ajustarTabelasResponsivas();
                 })
                 .catch(error => {
                     console.error('Erro ao carregar entregadores:', error);
@@ -449,6 +769,7 @@
                 });
         }
 
+        // Funções existentes de cadastro e edição
         function cadastrarEmpresa() {
             const form = document.getElementById('empresaForm');
             const formData = new FormData(form);
@@ -722,21 +1043,8 @@
             }
         }
 
-        // Carrega os dados ao iniciar a página
-        document.addEventListener('DOMContentLoaded', function() {
-            carregarDados();
-
-            // Adiciona event listeners para os formulários
-            document.getElementById('empresaForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                cadastrarEmpresa();
-            });
-
-            document.getElementById('entregadorForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                cadastrarEntregador();
-            });
-        });
+        // Adiciona listener para redimensionamento da janela
+        window.addEventListener('resize', ajustarTabelasResponsivas);
     </script>
 </body>
 </html> 
