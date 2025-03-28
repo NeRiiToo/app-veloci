@@ -927,12 +927,131 @@ def atualizar_empresa(nome):
         log_error('Erro ao atualizar empresa', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/logs')
+@admin_required
+def logs():
+    return render_template('logs.html', permissao=session.get('permissao'))
+
+@app.route('/api/logs')
+@admin_required
+def api_logs():
+    try:
+        # Obtém os parâmetros de filtro
+        nivel = request.args.get('nivel', 'todos')
+        usuario = request.args.get('usuario', '')
+        empresa = request.args.get('empresa', '')
+        data_inicial = request.args.get('data_inicial', '')
+        data_final = request.args.get('data_final', '')
+
+        # Lê o arquivo de log
+        logs = []
+        if os.path.exists('logs/sistema.log'):
+            with open('logs/sistema.log', 'r', encoding='utf-8') as f:
+                for linha in f:
+                    try:
+                        # Parseia a linha do log
+                        partes = linha.strip().split(' - ')
+                        if len(partes) >= 3:
+                            timestamp = partes[0]
+                            level = partes[1]
+                            message = ' - '.join(partes[2:])  # Junta o resto da mensagem
+
+                            # Extrai informações adicionais
+                            username = None
+                            details = None
+                            empresa_log = None
+                            
+                            # Procura por "Usuário:" na mensagem
+                            if 'Usuário:' in message:
+                                user_part = message.split('Usuário:')[1].split(' - ')[0].strip()
+                                username = user_part
+                            
+                            # Procura por "Detalhes:" na mensagem
+                            if 'Detalhes:' in message:
+                                details = message.split('Detalhes:')[1].strip()
+                                
+                                # Procura pela empresa nos detalhes
+                                if 'Empresa:' in details:
+                                    empresa_log = details.split('Empresa:')[1].split(',')[0].strip()
+                                elif 'Nome:' in details:
+                                    empresa_log = details.split('Nome:')[1].split(',')[0].strip()
+
+                            # Aplica os filtros
+                            if nivel != 'todos' and level != nivel:
+                                continue
+                                
+                            # Filtro de usuário
+                            if usuario and (not username or usuario != username):
+                                continue
+                                
+                            # Filtro de empresa
+                            if empresa and empresa_log:
+                                # Remove possíveis prefixos
+                                empresa_log = empresa_log.replace('Nome: ', '').replace('Empresa: ', '')
+                                if empresa != empresa_log:
+                                    continue
+
+                            # Adiciona o log à lista
+                            log_entry = {
+                                'timestamp': timestamp,
+                                'level': level,
+                                'message': message,
+                                'username': username,
+                                'details': details,
+                                'empresa': empresa_log,
+                                'raw': linha.strip()
+                            }
+                            logs.append(log_entry)
+                    except Exception as e:
+                        print(f"Erro ao processar linha do log: {str(e)}")
+                        continue
+
+        # Ordena os logs por data (mais recentes primeiro)
+        logs.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        # Obtém lista de usuários dos logs
+        usuarios_logs = list(set(log['username'] for log in logs if log['username']))
+        
+        # Obtém lista de usuários cadastrados
+        usuarios_cadastrados = []
+        if os.path.exists(USUARIOS_FILE):
+            df_usuarios = pd.read_csv(USUARIOS_FILE)
+            usuarios_cadastrados = df_usuarios['username'].tolist()
+        
+        # Combina as duas listas e remove duplicatas
+        usuarios = list(set(usuarios_logs + usuarios_cadastrados))
+        usuarios.sort()  # Ordena alfabeticamente
+        
+        # Obtém lista de empresas dos logs
+        empresas_logs = list(set(log['empresa'] for log in logs if log['empresa']))
+        
+        # Obtém lista de empresas cadastradas
+        empresas_cadastradas = []
+        if os.path.exists(EMPRESAS_FILE):
+            df_empresas = pd.read_csv(EMPRESAS_FILE)
+            empresas_cadastradas = df_empresas['nome'].tolist()
+        
+        # Combina as duas listas e remove duplicatas
+        empresas = list(set(empresas_logs + empresas_cadastradas))
+        empresas.sort()  # Ordena alfabeticamente
+        
+        return jsonify({
+            'logs': logs,
+            'usuarios': usuarios,
+            'empresas': empresas
+        })
+    except Exception as e:
+        log_error('Erro ao carregar logs', session.get('username'), str(e))
+        return jsonify({'error': str(e)}), 500
+
 def log_action(action, username, details=None):
     """
     Registra uma ação no log do sistema
     """
     try:
-        message = f"Ação: {action} - Usuário: {username}"
+        message = f"Ação: {action}"
+        if username:
+            message += f" - Usuário: {username}"
         if details:
             message += f" - Detalhes: {details}"
         logger.info(message)
@@ -944,7 +1063,9 @@ def log_error(error, username, details=None):
     Registra um erro no log do sistema
     """
     try:
-        message = f"Erro: {error} - Usuário: {username}"
+        message = f"Erro: {error}"
+        if username:
+            message += f" - Usuário: {username}"
         if details:
             message += f" - Detalhes: {details}"
         logger.error(message)

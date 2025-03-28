@@ -36,3 +36,4 @@
 2025-03-28 12:11:13 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cantina Volpi Lauro
 2025-03-28 12:19:57 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi Lauro, Entregador: Adeilton Ferreira Souza , Período: 2025-04-03 12:19:00 até 2025-04-03 18:19:00
 2025-03-28 12:19:57 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi Lauro, Entregador: Adeilton Ferreira Souza , Período: 2025-04-04 12:19:00 até 2025-04-04 18:19:00
+2025-03-28 12:22:06 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - Paralela, Alterações: taxa_total_cobrada: 16.0 -> 16, taxa_total_entregador: 13.0 -> 13, taxa_total_cobrada_fim_semana:  -> 16, taxa_total_entregador_fim_semana:  -> 15, dias_diferentes:  -> [5, 6, 4]

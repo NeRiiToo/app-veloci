@@ -39,11 +39,15 @@
                         <a class="nav-link" href="/">Registrar Diária</a>
                     </li>
                     {% if permissao == 'ADM' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/cadastros">Cadastros</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/cadastro_usuario">Usuários</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            Administração
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/cadastros">Cadastros</a></li>
+                            <li><a class="dropdown-item active" href="/cadastro_usuario">Usuários</a></li>
+                            <li><a class="dropdown-item" href="/logs">Logs</a></li>
+                        </ul>
                     </li>
                     {% endif %}
                 </ul>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs do Sistema - Gerenciamento de Escalas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .log-container {
+            max-height: 600px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .log-error {
+            color: #dc3545;
+        }
+        .log-info {
+            color: #0d6efd;
+        }
+        .log-warning {
+            color: #ffc107;
+        }
+        .filters {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Gerenciamento de Escalas - Veloci</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Registrar Diária</a>
+                    </li>
+                    {% if permissao == 'ADM' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            Administração
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/cadastros">Cadastros</a></li>
+                            <li><a class="dropdown-item" href="/cadastro_usuario">Usuários</a></li>
+                            <li><a class="dropdown-item active" href="/logs">Logs</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link">Usuário: {{ session.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Sair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Logs do Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="filters">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nível</label>
+                                        <select class="form-select" id="nivelFilter">
+                                            <option value="todos">Todos</option>
+                                            <option value="INFO">Info</option>
+                                            <option value="ERROR">Erro</option>
+                                            <option value="WARNING">Aviso</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">Usuário</label>
+                                        <select class="form-select" id="usuarioFilter">
+                                            <option value="">Todos os usuários</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">Empresa</label>
+                                        <select class="form-select" id="empresaFilter">
+                                            <option value="">Todas as empresas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="dataInicial">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="dataFinal">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <button class="btn btn-primary" onclick="carregarLogs()">Filtrar</button>
+                                    <button class="btn btn-secondary" onclick="limparFiltros()">Limpar Filtros</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="log-container" id="logContainer">
+                            <!-- Os logs serão carregados aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function formatarData(data) {
+            return new Date(data).toLocaleString('pt-BR');
+        }
+
+        function carregarLogs() {
+            const nivel = document.getElementById('nivelFilter').value;
+            const usuario = document.getElementById('usuarioFilter').value;
+            const empresa = document.getElementById('empresaFilter').value;
+            const dataInicial = document.getElementById('dataInicial').value;
+            const dataFinal = document.getElementById('dataFinal').value;
+
+            // Construir a URL com os parâmetros de filtro
+            let url = '/api/logs?';
+            const params = new URLSearchParams();
+            
+            if (nivel !== 'todos') params.append('nivel', nivel);
+            if (usuario) params.append('usuario', usuario);
+            if (empresa) params.append('empresa', empresa);
+            if (dataInicial) params.append('data_inicial', dataInicial);
+            if (dataFinal) params.append('data_final', dataFinal);
+            
+            url += params.toString();
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Atualiza o select de usuários
+                    const usuarioSelect = document.getElementById('usuarioFilter');
+                    const usuarioAtual = usuarioSelect.value;
+                    usuarioSelect.innerHTML = '<option value="">Todos os usuários</option>';
+                    
+                    // Adiciona todas as opções de usuários
+                    data.usuarios.forEach(user => {
+                        usuarioSelect.add(new Option(user, user, false, user === usuarioAtual));
+                    });
+                    usuarioSelect.disabled = false;
+
+                    // Atualiza o select de empresas
+                    const empresaSelect = document.getElementById('empresaFilter');
+                    const empresaAtual = empresaSelect.value;
+                    empresaSelect.innerHTML = '<option value="">Todas as empresas</option>';
+                    
+                    // Adiciona todas as opções de empresas
+                    data.empresas.forEach(emp => {
+                        empresaSelect.add(new Option(emp, emp, false, emp === empresaAtual));
+                    });
+                    empresaSelect.disabled = false;
+
+                    // Atualiza a lista de logs
+                    const container = document.getElementById('logContainer');
+                    container.innerHTML = '';
+
+                    if (data.logs.length === 0) {
+                        container.innerHTML = '<div class="alert alert-info">Nenhum log encontrado com os filtros selecionados.</div>';
+                    } else {
+                        data.logs.forEach(log => {
+                            const entry = document.createElement('div');
+                            entry.className = 'log-entry';
+                            
+                            // Determina a classe CSS baseada no nível do log
+                            let logClass = '';
+                            if (log.level === 'ERROR') {
+                                logClass = 'log-error';
+                            } else if (log.level === 'WARNING') {
+                                logClass = 'log-warning';
+                            } else {
+                                logClass = 'log-info';
+                            }
+                            
+                            entry.innerHTML = `<span class="${logClass}">${log.raw}</span>`;
+                            container.appendChild(entry);
+                        });
+                    }
+
+                    // Habilita todos os campos de filtro
+                    document.getElementById('nivelFilter').disabled = false;
+                    document.getElementById('dataInicial').disabled = false;
+                    document.getElementById('dataFinal').disabled = false;
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar logs:', error);
+                    alert('Erro ao carregar logs do sistema');
+                });
+        }
+
+        function limparFiltros() {
+            // Limpa os valores dos filtros
+            document.getElementById('nivelFilter').value = 'todos';
+            document.getElementById('usuarioFilter').value = '';
+            document.getElementById('empresaFilter').value = '';
+            document.getElementById('dataInicial').value = '';
+            document.getElementById('dataFinal').value = '';
+
+            // Habilita todos os campos
+            document.getElementById('nivelFilter').disabled = false;
+            document.getElementById('usuarioFilter').disabled = false;
+            document.getElementById('empresaFilter').disabled = false;
+            document.getElementById('dataInicial').disabled = false;
+            document.getElementById('dataFinal').disabled = false;
+
+            // Recarrega os logs
+            carregarLogs();
+        }
+
+        // Carrega os logs quando a página é carregada
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarLogs();
+        });
+    </script>
+</body>
+</html> 
