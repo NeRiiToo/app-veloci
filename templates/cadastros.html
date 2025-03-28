@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastros - Veloci</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <style>
         /* Estilos gerais */
         body {
@@ -149,6 +155,7 @@
 
             .nav-tabs .nav-item {
                 flex: 0 0 auto;
+            
             }
 
             .nav-tabs .nav-link {
@@ -310,13 +317,13 @@
     <div class="container">
         <!-- Abas responsivas -->
         <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
-            <li class="nav-item" role="presentation">
+            <li class="nav-button" role="presentation">
                 <button class="nav-link active" id="empresas-tab" data-bs-toggle="tab" data-bs-target="#empresas" type="button" role="tab">
                     Empresas
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="entregadores-tab" data-bs-toggle="tab" data-bs-target="#entregadores" type="button" role="tab">
+            <li class="nav-button" role="presentation">
+                <button class="nav-link" style="color: black;" id="entregadores-tab" data-bs-toggle="tab" data-bs-target="#entregadores" type="button" role="tab">
                     Entregadores
                 </button>
             </li>
