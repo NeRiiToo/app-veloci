@@ -47,3 +47,92 @@
 2025-03-28 15:17:24 - INFO - Ação: Diária registrada - Usuário: Danilo Rebouças - Detalhes: Empresa: Cantina Volpi Lauro, Entregador: Adilton Brito Viana , Período: 2025-03-19 15:17:00 até 2025-03-19 21:17:00
 2025-03-28 15:17:26 - INFO - Ação: Logout - Usuário: Danilo Rebouças
 2025-03-28 15:17:30 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 16:17:21 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 16:19:44 - INFO - Ação: Logout - Usuário: Moab
+2025-03-28 16:23:38 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 16:24:10 - INFO - Ação: Logout - Usuário: Moab
+2025-03-28 16:24:24 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-28 16:24:55 - INFO - Ação: Diária registrada - Usuário: Danilo Rebouças - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Adeilton Ferreira Souza , Período: 2025-04-03 16:30:00 até 2025-04-03 22:30:00
+2025-03-28 16:25:01 - INFO - Ação: Logout - Usuário: Danilo Rebouças
+2025-03-28 16:25:07 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 16:42:05 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-28 17:02:54 - INFO - Ação: Logout - Usuário: Moab
+2025-03-28 17:02:54 - INFO - Ação: Logout - Usuário: Moab
+2025-03-29 10:12:26 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:12:31 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:12:54 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:15:59 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:16:50 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:18:32 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Danilo Rebouças
+2025-03-29 10:19:28 - INFO - Ação: Logout - Usuário: Moab
+2025-03-29 10:19:32 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-29 10:20:25 - INFO - Ação: Logout - Usuário: Danilo Rebouças
+2025-03-29 10:20:28 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:21:01 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Nonni La Pasta
+2025-03-29 10:21:18 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Danilo Rebouças
+2025-03-29 10:21:26 - INFO - Ação: Logout - Usuário: Moab
+2025-03-29 10:21:30 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-29 10:37:18 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 10:41:24 - INFO - Ação: Diária registrada - Usuário: Danilo Rebouças - Detalhes: Empresa: Nonni La Pasta, Entregador: Adrian de Araujo Braga , Período: 2025-03-29 10:21:00 até 2025-03-29 16:44:00
+2025-03-29 10:41:27 - INFO - Ação: Logout - Usuário: Danilo Rebouças
+2025-03-29 10:42:11 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Nonni La Pasta, Alterações: taxa_total_entregador: 5.0 -> 5, taxa_total_cobrada_fim_semana: 6.5 -> None, taxa_total_entregador_fim_semana: 5.0 -> None, dias_diferentes:  -> []
+2025-03-29 10:42:48 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Nonni La Pasta, Entregador: Adriano Almeida Mota, Período: 2025-03-18 10:42:00 até 2025-03-18 16:17:00
+2025-03-29 10:59:57 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Nonni La Pasta, Entregador: Adeilton Ferreira Souza , Período: 2025-03-29 10:59:00 até 2025-03-29 20:13:00
+2025-03-29 11:01:23 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Nonni La Pasta, Entregador: Adriano Almeida Mota, Período: 2025-03-18 09:00:00 até 2025-03-18 16:06:00
+2025-03-29 11:01:58 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Adeilton Ferreira Souza , Período: 2025-03-18 06:01:00 até 2025-03-18 11:07:00
+2025-03-29 11:29:59 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 11:31:35 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Nonni La Pasta, Entregador: Adriano Pereira , Período: 2025-03-29 11:30:00 até 2025-03-29 16:30:00
+2025-03-29 11:31:36 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Adeilton Ferreira Souza , Período: 2025-03-29 11:47:00 até 2025-03-29 20:35:00
+2025-03-29 11:32:21 - INFO - Ação: Logout - Usuário: Moab
+2025-03-29 11:32:31 - ERROR - Erro: Erro no login - Usuário: Danilo Rebouças  - Detalhes: single positional indexer is out-of-bounds
+2025-03-29 11:32:40 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-29 11:36:56 - INFO - Ação: Logout - Usuário: Danilo Rebouças
+2025-03-29 11:37:04 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 11:51:38 - INFO - Ação: Logout - Usuário: Moab
+2025-03-29 11:51:47 - INFO - Ação: Login bem-sucedido - Usuário: Danilo Rebouças
+2025-03-29 11:53:04 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 12:45:58 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 15:14:17 - ERROR - Erro: Erro no login - Usuário: moab - Detalhes: single positional indexer is out-of-bounds
+2025-03-29 15:14:21 - ERROR - Erro: Erro no login - Usuário: moab - Detalhes: single positional indexer is out-of-bounds
+2025-03-29 15:14:29 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-29 15:16:14 - INFO - Ação: Usuário cadastrado com sucesso - Usuário: Moab - Detalhes: Nicholas
+2025-03-29 15:16:20 - INFO - Ação: Logout - Usuário: Moab
+2025-03-29 15:16:27 - INFO - Ação: Login bem-sucedido - Usuário: Nicholas
+2025-03-29 17:48:49 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-03-31 10:47:50 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-01 14:16:35 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-01 14:16:54 - INFO - Ação: Usuário excluído com sucesso - Usuário: Moab - Detalhes: Danilo Rebouças
+2025-04-01 14:16:59 - INFO - Ação: Usuário excluído com sucesso - Usuário: Moab - Detalhes: supervisor
+2025-04-01 14:17:12 - INFO - Ação: Usuário cadastrado com sucesso - Usuário: Moab - Detalhes: supervisor
+2025-04-01 14:18:06 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Cantina Volpi Lauro, Alterações: taxa_total_cobrada: 50.0 -> 50, taxa_total_entregador: 50.0 -> 50, taxa_total_cobrada_fim_semana: 55.0 -> None, taxa_total_entregador_fim_semana: 55.0 -> None, dias_diferentes: 5,6,4 -> []
+2025-04-01 14:20:22 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - Itaigara
+2025-04-01 14:20:59 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Pizza Hut - Pituba
+2025-04-01 14:22:00 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Oshi
+2025-04-01 14:23:25 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:24:32 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Carvão
+2025-04-01 14:25:32 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cheiro de Pizza
+2025-04-01 14:26:54 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Restaurante Marinata
+2025-04-01 14:27:56 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Mariposa & Pura vida - Barra
+2025-04-01 14:28:15 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Carvão, Alterações: taxa_total_cobrada: 0.0 -> 11, taxa_total_entregador: 0.0 -> 7, taxa_total_cobrada_fim_semana:  -> None, taxa_total_entregador_fim_semana:  -> None, dias_diferentes:  -> []
+2025-04-01 14:28:46 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Pizza Hut Ondina
+2025-04-01 14:29:28 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - pituba
+2025-04-01 14:30:21 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - ondina
+2025-04-01 14:31:00 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: admin
+2025-04-01 14:31:12 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: supervisor
+2025-04-01 14:36:57 - INFO - Ação: Usuário excluído com sucesso - Usuário: Moab - Detalhes: Nicholas
+2025-04-01 14:37:05 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Moab
+2025-04-01 14:37:10 - INFO - Ação: Logout - Usuário: Moab
+2025-04-01 14:37:16 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:37:23 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:37:31 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:37:38 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:37:48 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:37:54 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:38:00 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:38:09 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:38:18 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:38:25 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:40:22 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:40:28 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: supervisor
+2025-04-01 14:42:33 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
+2025-04-01 14:42:38 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab

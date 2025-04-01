@@ -160,21 +160,45 @@ def login():
         username = request.form.get('username')
         senha = request.form.get('senha')
         
+        # Log para debug
+        print(f"Tentativa de login - Username: {username}")
+        
         try:
-            df = pd.read_csv(USUARIOS_FILE)
-            usuario = df[df['username'] == username].iloc[0]
+            # Verifica se o arquivo existe
+            if not os.path.exists(USUARIOS_FILE):
+                print("Arquivo de usuários não encontrado")
+                return render_template('login.html', error='Erro de configuração do sistema')
             
-            if usuario['senha'] == senha:
+            # Carrega o arquivo de usuários
+            df = pd.read_csv(USUARIOS_FILE)
+            print(f"Usuários carregados: {len(df)}")
+            
+            # Verifica se o usuário existe
+            usuarios_encontrados = df[df['username'] == username]
+            if usuarios_encontrados.empty:
+                print(f"Usuário não encontrado: {username}")
+                return render_template('login.html', error='Usuário não encontrado')
+            
+            usuario = usuarios_encontrados.iloc[0]
+            print(f"Senha fornecida: {senha}")
+            print(f"Senha no banco: {usuario['senha']}")
+            
+            # Compara as senhas
+            if str(usuario['senha']) == str(senha):
                 session['username'] = username
                 session['permissao'] = usuario['permissao']
                 log_action('Login bem-sucedido', username)
+                print(f"Login bem-sucedido para {username}")
                 return redirect(url_for('index'))
             else:
                 log_action('Tentativa de login falha - Senha incorreta', username)
+                print(f"Senha incorreta para {username}")
                 return render_template('login.html', error='Senha incorreta')
+                
         except Exception as e:
+            print(f"Erro no login: {str(e)}")
             log_error('Erro no login', username, str(e))
-            return render_template('login.html', error='Erro ao fazer login')
+            return render_template('login.html', error=f'Erro ao fazer login: {str(e)}')
     
     return render_template('login.html')
 
@@ -821,21 +845,32 @@ def api_diaria():
         empresa = empresas[empresas['nome'] == data['empresa']].iloc[0]
         entregador = entregadores[entregadores['nome'] == data['entregador']].iloc[0]
         
-        data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
-        data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M').strftime('%Y-%m-%d %H:%M:%S')
+        data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M')
+        data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M')
         
-        # Processa as taxas considerando o dia da semana
-        taxas = processar_taxas_empresa(empresa, data_inicio)
+        # Calcula a diferença de horas se o tipo_valor for 'hora'
+        if empresa['tipo_valor'] == 'hora':
+            diferenca_horas = (data_fim - data_inicio).total_seconds() / 3600  # Converte para horas
+            # Processa as taxas considerando o dia da semana
+            taxas = processar_taxas_empresa(empresa, data_inicio.strftime('%Y-%m-%d %H:%M:%S'))
+            # Multiplica as taxas pela quantidade de horas
+            taxa_total_cobrada = taxas['taxa_total_cobrada'] * diferenca_horas
+            taxa_total_entregador = taxas['taxa_total_entregador'] * diferenca_horas
+        else:
+            # Se não for por hora, usa as taxas normalmente
+            taxas = processar_taxas_empresa(empresa, data_inicio.strftime('%Y-%m-%d %H:%M:%S'))
+            taxa_total_cobrada = taxas['taxa_total_cobrada']
+            taxa_total_entregador = taxas['taxa_total_entregador']
         
         nova_diaria = {
-            'Data e hora de início': data_inicio,
-            'Data e hora de fim': data_fim,
+            'Data e hora de início': data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
+            'Data e hora de fim': data_fim.strftime('%Y-%m-%d %H:%M:%S'),
             'Empresa': data['empresa'],
             'Tipo Veiculo': data['veiculo'],
             'Entregador': data['entregador'],
             'CPF': entregador['cpf'],
-            'Taxa total cobrada': taxas['taxa_total_cobrada'],
-            'Taxa total entregador': taxas['taxa_total_entregador'],
+            'Taxa total cobrada': taxa_total_cobrada,
+            'Taxa total entregador': taxa_total_entregador,
             'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
             'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N'
         }

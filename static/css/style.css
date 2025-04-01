@@ -243,22 +243,204 @@ body {
 
 /* Responsividade */
 @media (max-width: 768px) {
+    /* Ajustes gerais */
+    .container {
+        padding: 10px;
+    }
+
+    /* Ajustes da navbar */
+    .navbar {
+        padding: 0.5rem;
+    }
+
     .navbar-brand {
+        font-size: 1rem;
+    }
+
+    /* Ajustes de cards */
+    .card {
+        margin: 0.5rem 0;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Ajustes de formulários */
+    .form-group {
+        margin-bottom: 0.75rem;
+    }
+
+    .form-control, .form-select {
+        font-size: 16px; /* Evita zoom automático em iOS */
+        height: 42px;
+    }
+
+    /* Ajustes de botões */
+    .btn {
+        width: auto;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        min-width: auto;
+    }
+
+    /* Ajustes de tabelas */
+    .table-responsive {
+        margin: 0;
+        border: none;
+    }
+
+    .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Ajustes de modais */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        padding: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn {
+        width: calc(50% - 0.5rem);
+        margin: 0;
+    }
+
+    /* Ajustes Select2 */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 42px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 42px;
+    }
+
+    /* Ajustes para grids */
+    .row {
+        margin-left: -5px;
+        margin-right: -5px;
+    }
+
+    .col, [class*="col-"] {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+
+/* Ajustes específicos para telas muito pequenas */
+@media (max-width: 375px) {
+    /* Ajustes de texto */
+    body {
+        font-size: 14px;
+    }
+
+    h1, h2, h3 {
         font-size: 1.2rem;
     }
 
-    .card {
-        margin: 1rem;
+    /* Ajustes de botões em grupos */
+    .btn-group {
+        flex-direction: column;
     }
 
-    .btn {
+    .btn-group .btn {
         width: 100%;
-        margin-bottom: 0.5rem;
+        margin: 0.125rem 0;
     }
 
-    .table-responsive {
-        margin: 0 1rem;
+    /* Ajustes de tabelas */
+    .table td[data-label]:before {
+        margin-right: 0.5rem;
+        min-width: 100px;
     }
+
+    /* Ajustes de modais */
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* Ajustes para orientação paisagem em dispositivos móveis */
+@media (max-height: 576px) and (orientation: landscape) {
+    .modal-dialog {
+        max-height: 100vh;
+        margin: 0;
+    }
+
+    .modal-body {
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+
+    .navbar {
+        padding: 0.25rem;
+    }
+
+    .container {
+        padding: 5px;
+    }
+}
+
+/* Ajustes para inputs do tipo datetime-local */
+input[type="datetime-local"] {
+    -webkit-appearance: none;
+    font-size: 16px;
+    padding: 8px;
+}
+
+/* Ajustes para elementos sobrepostos */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dropdown-menu {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Ajustes para elementos fixos */
+.sticky-top {
+    z-index: 1020;
+}
+
+/* Melhorias de acessibilidade para toque */
+.nav-link, .btn, .form-control {
+    min-height: 44px; /* Tamanho mínimo recomendado para alvos de toque */
+}
+
+/* Ajustes de espaçamento para elementos empilhados */
+.stacked-group > * {
+    margin-bottom: 0.5rem;
+}
+
+.stacked-group > *:last-child {
+    margin-bottom: 0;
 }
 
 /* Estilos específicos para delivery */

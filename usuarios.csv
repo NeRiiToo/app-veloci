@@ -1,5 +1,4 @@
 username,senha,permissao,empresas_vinculadas
-admin,admin123,ADM,
-supervisor,1245,supervisor,
+admin,123456,ADM,
 Moab,123456,ADM,
-Danilo Rebouças,123456,supervisor,Cantina Volpi - Paralela|Cantina Volpi Lauro
+supervisor,123456,supervisor,Cantina Volpi - Paralela|Cantina Volpi - Itaigara
