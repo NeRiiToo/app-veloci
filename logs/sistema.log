@@ -136,3 +136,9 @@
 2025-04-01 14:40:28 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: supervisor
 2025-04-01 14:42:33 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: admin
 2025-04-01 14:42:38 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-01 14:45:28 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-01 14:45:34 - INFO - Ação: Logout - Usuário: Moab
+2025-04-01 14:45:37 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-01 14:45:55 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Moab
+2025-04-01 14:45:57 - INFO - Ação: Logout - Usuário: Moab
+2025-04-01 14:46:02 - INFO - Ação: Login bem-sucedido - Usuário: Moab
