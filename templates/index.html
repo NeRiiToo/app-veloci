@@ -291,13 +291,13 @@
                                 <div class="col-md-3">
                                     <div class="mb-3">
                                         <label class="form-label">Data e Hora de Início</label>
-                                        <input type="datetime-local" class="form-control" name="data_inicio" required>
+                                        <input type="datetime-local" class="form-control" name="data_inicio" id="data_inicio" required onchange="atualizarLimitesDataFim()">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="mb-3">
                                         <label class="form-label">Data e Hora de Fim</label>
-                                        <input type="datetime-local" class="form-control" name="data_fim" required>
+                                        <input type="datetime-local" class="form-control" name="data_fim" id="data_fim" required>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -355,14 +355,16 @@
             </div>
         </div>
 
-        {% if permissao == 'ADM' %}
+        <!-- Diárias Registradas -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2>Diárias Registradas</h2>
+                    {% if permissao == 'ADM' %}
                     <button type="button" class="btn btn-success" onclick="abrirModalExportar()">
                         Exportar Diárias
                     </button>
+                    {% endif %}
                 </div>
                 
                 <!-- Filtros -->
@@ -410,12 +412,14 @@
                                 <th>Data e Hora de Início</th>
                                 <th>Data e Hora de Fim</th>
                                 <th>Empresa</th>
-                                <th>Tipo Veículo</th>
                                 <th>Entregador</th>
+                                {% if permissao == 'ADM' %}
+                                <th>Tipo Veículo</th>
                                 <th>CPF</th>
                                 <th>Taxa Total Cobrada</th>
                                 <th>Taxa Total Entregador</th>
                                 <th>Mínimo Garantido</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -423,7 +427,6 @@
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
 
     <!-- Modal Exportar Diárias -->
@@ -495,11 +498,9 @@
             console.log('Carregando todos os dados...');
             carregarEmpresas();
             carregarEntregadores();
-            {% if permissao == 'ADM' %}
             carregarDiarias();
             carregarFiltroEmpresas();
-            {% endif %}
-
+            
             // Inicializa o Select2 após carregar os dados
             setTimeout(initializeSelect2, 500);
         }
@@ -561,29 +562,36 @@
         }
 
         function carregarFiltroEmpresas() {
-            fetch('/api/empresas')
+            console.log('Carregando empresas para filtro...');
+            fetch('/api/empresas/filtro')
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Empresas para filtro:', data);
                     const select = document.getElementById('filtroEmpresa');
                     select.innerHTML = '<option value="">Todas as empresas</option>';
                     data.forEach(empresa => {
-                        select.innerHTML += `<option value="${empresa.nome}">${empresa.nome}</option>`;
+                        select.innerHTML += `<option value="${empresa}">${empresa}</option>`;
                     });
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar empresas para filtro:', error);
                 });
         }
 
         let todasDiarias = []; // Variável global para armazenar todas as diárias
 
         function carregarDiarias() {
+            console.log('Iniciando carregamento de diárias...'); // Log para debug
             fetch('/api/diarias')
                 .then(response => {
-                    console.log('Status da resposta:', response.status);
+                    console.log('Status da resposta:', response.status); // Log para debug
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Dados recebidos:', data);
-                    todasDiarias = data; // Armazena todas as diárias
-                    atualizarTabelaDiarias(data); // Atualiza a tabela com todas as diárias
+                    console.log('Dados recebidos:', data); // Log para debug
+                    console.log('Quantidade de diárias:', data.length); // Log para debug
+                    todasDiarias = data;
+                    atualizarTabelaDiarias(data);
                 })
                 .catch(error => {
                     console.error('Erro ao carregar diárias:', error);
@@ -593,6 +601,7 @@
         }
 
         function atualizarTabelaDiarias(diarias) {
+            console.log('Atualizando tabela com', diarias.length, 'diárias'); // Log para debug
             const tbody = document.querySelector('#tabelaDiarias tbody');
             tbody.innerHTML = '';
             
@@ -607,24 +616,35 @@
                 diariasOrdenadas.forEach(diaria => {
                     try {
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `
+                
+                        // Colunas básicas (visíveis para todos)
+                        let html = `
                             <td data-label="Data e Hora de Início">${formatarDataHora(diaria['Data e hora de início'] || '')}</td>
                             <td data-label="Data e Hora de Fim">${formatarDataHora(diaria['Data e hora de fim'] || '')}</td>
                             <td data-label="Empresa">${diaria['Empresa'] || ''}</td>
-                            <td data-label="Tipo Veículo">${diaria['Tipo Veiculo'] || ''}</td>
                             <td data-label="Entregador">${diaria['Entregador'] || ''}</td>
+                        `;
+
+                        // Colunas adicionais (apenas para administradores)
+                        {% if permissao == 'ADM' %}
+                        html += `
+                            <td data-label="Tipo Veículo">${diaria['Tipo Veiculo'] || ''}</td>
                             <td data-label="CPF">${diaria['CPF'] || ''}</td>
                             <td data-label="Taxa Total Cobrada">R$ ${typeof diaria['Taxa total cobrada'] === 'number' ? diaria['Taxa total cobrada'].toFixed(2) : '0.00'}</td>
                             <td data-label="Taxa Total Entregador">R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
                             <td data-label="Mínimo Garantido">${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
                         `;
+                        {% endif %}
+
+                        tr.innerHTML = html;
                         tbody.appendChild(tr);
                     } catch (err) {
                         console.error('Erro ao processar diária:', err, diaria);
                     }
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Nenhuma diária encontrada</td></tr>';
+                console.log('Nenhuma diária encontrada para exibir'); // Log para debug
+                tbody.innerHTML = '<tr><td colspan="{{ "9" if permissao == "ADM" else "4" }}" class="text-center">Nenhuma diária encontrada</td></tr>';
             }
         }
 
@@ -931,6 +951,56 @@
             document.getElementById('filtroDataFinal').value = '';
             atualizarTabelaDiarias(todasDiarias);
         }
+
+        function atualizarLimitesDataFim() {
+            const dataInicio = document.getElementById('data_inicio');
+            const dataFim = document.getElementById('data_fim');
+            
+            if (dataInicio.value) {
+                // Converte a data de início para objeto Date
+                const inicio = new Date(dataInicio.value);
+                
+                // Define a data mínima como a data de início
+                const minDate = inicio.toISOString().slice(0, 16);
+                
+                // Calcula a data máxima (1 dia depois da data de início)
+                const maxDate = new Date(inicio);
+                maxDate.setDate(maxDate.getDate() + 1);
+                const maxDateStr = maxDate.toISOString().slice(0, 16);
+                
+                // Atualiza os atributos min e max do campo de data fim
+                dataFim.min = minDate;
+                dataFim.max = maxDateStr;
+                
+                // Se a data fim já estiver preenchida e for maior que o novo máximo, ajusta para o máximo
+                if (dataFim.value) {
+                    const fimAtual = new Date(dataFim.value);
+                    if (fimAtual > maxDate) {
+                        dataFim.value = maxDateStr;
+                    }
+                }
+            }
+        }
+
+        // Adiciona validação ao formulário
+        document.getElementById('diariaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const dataInicio = new Date(document.getElementById('data_inicio').value);
+            const dataFim = new Date(document.getElementById('data_fim').value);
+            
+            // Calcula a diferença em dias
+            const diffTime = Math.abs(dataFim - dataInicio);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 1) {
+                alert('O período máximo permitido é de 1 dia.');
+                return false;
+            }
+            
+            // Se chegou aqui, continua com o envio do formulário
+            adicionarDiariaTemporaria();
+        });
 
         // Carrega os dados ao iniciar a página
         document.addEventListener('DOMContentLoaded', function() {

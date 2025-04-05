@@ -1,4 +1,6 @@
 username,senha,permissao,empresas_vinculadas
 admin,123456,ADM,
 Moab,123456,ADM,
-supervisor,123456,supervisor,Cantina Volpi - Paralela|Cantina Volpi - Itaigara
+supervisor,123456,supervisor,Carvão
+Rafael,2010,supervisor,Carvão|Cheiro de Pizza|Pizza Hut Ondina|Cantina Volpi - ondina
+Marcos,Juan112233,supervisor,Cantina Volpi - Paralela|Cantina Volpi - Itaigara

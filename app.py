@@ -758,9 +758,24 @@ def exportar_excel():
 def get_diarias():
     try:
         df_diarias = carregar_diarias()
+        print(f"Total de diárias carregadas: {len(df_diarias)}")  # Log para debug
+        
         if df_diarias.empty:
+            print("DataFrame de diárias está vazio")  # Log para debug
             return jsonify([])
             
+        # Verifica permissão do usuário atual
+        usuario_atual = session.get('username')
+        permissao_atual = session.get('permissao')
+        print(f"Usuário atual: {usuario_atual}, Permissão: {permissao_atual}")  # Log para debug
+        
+        # Se for supervisor, filtra apenas suas diárias
+        if permissao_atual == 'supervisor':
+            print(f"Filtrando diárias para o supervisor: {usuario_atual}")  # Log para debug
+            print(f"Valores únicos na coluna usuario_registro: {df_diarias['usuario_registro'].unique()}")  # Log para debug
+            df_diarias = df_diarias[df_diarias['usuario_registro'].str.strip() == usuario_atual.strip()]
+            print(f"Diárias após filtro: {len(df_diarias)}")  # Log para debug
+        
         # Garante que todas as colunas necessárias existam
         colunas_necessarias = [
             'Data e hora de início',
@@ -772,7 +787,8 @@ def get_diarias():
             'Taxa total cobrada',
             'Taxa total entregador',
             'Taxa mínima cobrada',
-            'Taxa mínima entregador'
+            'Taxa mínima entregador',
+            'usuario_registro'
         ]
         
         for coluna in colunas_necessarias:
@@ -783,19 +799,11 @@ def get_diarias():
         df_diarias['Taxa total cobrada'] = pd.to_numeric(df_diarias['Taxa total cobrada'], errors='coerce').fillna(0)
         df_diarias['Taxa total entregador'] = pd.to_numeric(df_diarias['Taxa total entregador'], errors='coerce').fillna(0)
         
-        # Converte para dicionário
-        diarias = df_diarias[colunas_necessarias].to_dict('records')
+        # Remove a coluna usuario_registro do resultado final
+        colunas_retorno = [col for col in colunas_necessarias if col != 'usuario_registro']
+        diarias = df_diarias[colunas_retorno].to_dict('records')
         
-        # Garante que não haja NaN no JSON
-        for diaria in diarias:
-            for key, value in diaria.items():
-                if pd.isna(value):  # Verifica se é NaN
-                    if key in ['Taxa total cobrada', 'Taxa total entregador']:
-                        diaria[key] = 0.0
-                    else:
-                        diaria[key] = ''
-        
-        print("Diárias encontradas:", len(diarias))  # Log para debug
+        print(f"Total de diárias retornadas: {len(diarias)}")  # Log para debug
         return jsonify(diarias)
         
     except Exception as e:
@@ -1106,6 +1114,32 @@ def log_error(error, username, details=None):
         logger.error(message)
     except Exception as e:
         print(f"Erro ao registrar log de erro: {str(e)}")
+
+@app.route('/api/empresas/filtro', methods=['GET'])
+def get_empresas_filtro():
+    try:
+        df_empresas = pd.DataFrame(carregar_empresas())
+        
+        # Se for supervisor, filtra apenas empresas vinculadas
+        if session.get('permissao') == 'supervisor':
+            # Carrega usuários para verificar vinculações
+            usuarios = carregar_usuarios()
+            usuario_atual = next((u for u in usuarios if u['username'] == session.get('username')), None)
+            
+            if usuario_atual and usuario_atual['empresas_vinculadas']:
+                # Filtra apenas empresas vinculadas ao supervisor
+                df_empresas = df_empresas[df_empresas['nome'].isin(usuario_atual['empresas_vinculadas'])]
+        
+        # Filtra apenas empresas ativas
+        df_empresas = df_empresas[df_empresas['status'] == 'ativo']
+        
+        # Retorna lista de empresas
+        empresas = df_empresas['nome'].tolist()
+        return jsonify(empresas)
+        
+    except Exception as e:
+        print(f"Erro ao carregar empresas para filtro: {str(e)}")
+        return jsonify([])
 
 if __name__ == '__main__':
     app.run(debug=True) 

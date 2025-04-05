@@ -142,3 +142,73 @@
 2025-04-01 14:45:55 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Moab
 2025-04-01 14:45:57 - INFO - Ação: Logout - Usuário: Moab
 2025-04-01 14:46:02 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-04 15:11:00 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-04 15:20:48 - INFO - Ação: Logout - Usuário: Moab
+2025-04-04 15:20:58 - INFO - Ação: Login bem-sucedido - Usuário: supervisor
+2025-04-04 15:25:25 - INFO - Ação: Diária registrada - Usuário: supervisor - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Marcio Silva Gonçalves , Período: 2025-04-04 15:00:00 até 2025-04-04 23:00:00
+2025-04-04 15:25:26 - INFO - Ação: Diária registrada - Usuário: supervisor - Detalhes: Empresa: Cantina Volpi - Paralela, Entregador: Adeilton Ferreira Souza , Período: 2025-04-04 16:23:00 até 2025-04-04 17:00:00
+2025-04-04 15:26:05 - INFO - Ação: Logout - Usuário: supervisor
+2025-04-04 15:26:13 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-04 15:28:50 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Nonni La Pasta, Entregador: Armando Soares da Cruz Filho, Período: 2025-04-17 15:00:00 até 2025-04-17 20:00:00
+2025-04-04 15:29:08 - INFO - Ação: Relatório exportado - Usuário: Moab - Detalhes: Período: 2025-04-17 até 2025-04-17
+2025-04-05 11:40:48 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-05 11:42:06 - INFO - Ação: Usuário cadastrado com sucesso - Usuário: Moab - Detalhes: Rafael
+2025-04-05 11:42:47 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: supervisor
+2025-04-05 11:42:51 - INFO - Ação: Logout - Usuário: Moab
+2025-04-05 11:42:58 - INFO - Ação: Login bem-sucedido - Usuário: supervisor
+2025-04-05 11:44:01 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 11:44:30 - INFO - Ação: Login bem-sucedido - Usuário: supervisor
+2025-04-05 11:46:02 - INFO - Ação: Diária registrada - Usuário: supervisor - Detalhes: Empresa: Carvão, Entregador: Rafael da silva basilio , Período: 2025-04-07 10:00:00 até 2025-04-07 16:00:00
+2025-04-05 11:47:39 - INFO - Ação: Logout - Usuário: supervisor
+2025-04-05 11:47:44 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-05 11:48:48 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Rafael
+2025-04-05 11:49:03 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Rafael
+2025-04-05 11:49:34 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Rafael
+2025-04-05 11:49:37 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Rafael
+2025-04-05 11:50:46 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Rafael
+2025-04-05 11:50:58 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Rafael
+2025-04-05 11:51:31 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Rafael
+2025-04-05 11:51:45 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 11:51:55 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 12:28:13 - INFO - Ação: Logout - Usuário: supervisor
+2025-04-05 12:28:21 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-05 14:13:43 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 14:16:10 - INFO - Ação: Login bem-sucedido - Usuário: supervisor
+2025-04-05 14:16:44 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 14:32:24 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Jonatas santos das neves , Período: 2025-04-07 18:00:00 até 2025-04-07 23:00:00
+2025-04-05 14:32:24 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Jonatas santos das neves , Período: 2025-04-09 18:00:00 até 2025-04-09 23:00:00
+2025-04-05 14:32:25 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Douglas Fonseca latão , Período: 2025-04-10 18:00:00 até 2025-04-10 23:00:00
+2025-04-05 14:32:25 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Jonatas santos das neves , Período: 2025-04-11 18:00:00 até 2025-04-11 23:00:00
+2025-04-05 14:32:25 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Douglas Fonseca latão , Período: 2025-04-11 18:00:00 até 2025-04-11 23:00:00
+2025-04-05 14:32:25 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Jonatas santos das neves , Período: 2025-04-12 18:00:00 até 2025-04-12 23:00:00
+2025-04-05 14:32:25 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Douglas Fonseca latão , Período: 2025-04-12 18:00:00 até 2025-04-12 23:00:00
+2025-04-05 14:32:26 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Jonatas santos das neves , Período: 2025-04-13 18:00:00 até 2025-04-13 23:00:00
+2025-04-05 14:32:26 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Douglas Fonseca latão , Período: 2025-04-13 18:00:00 até 2025-04-13 23:00:00
+2025-04-05 15:20:46 - INFO - Ação: Usuário cadastrado com sucesso - Usuário: Moab - Detalhes: Marcos
+2025-04-05 15:22:13 - INFO - Ação: Login bem-sucedido - Usuário: Marcos
+2025-04-05 15:25:44 - INFO - Ação: Logout - Usuário: Moab
+2025-04-05 15:25:50 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: supervisor
+2025-04-05 15:25:55 - INFO - Ação: Login bem-sucedido - Usuário: supervisor
+2025-04-05 15:27:23 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Cheiro de Pizza, Entregador: genival floquet Maciel , Período: 2025-04-13 18:00:00 até 2025-04-13 23:00:00
+2025-04-05 15:27:23 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Cheiro de Pizza, Entregador: Ronivaldo de Jesus dos Santos , Período: 2025-04-13 18:00:00 até 2025-04-13 23:00:00
+2025-04-05 15:51:43 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 15:59:57 - INFO - Ação: Logout - Usuário: supervisor
+2025-04-05 16:00:01 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-05 16:00:33 - INFO - Ação: Entregador cadastrado - Usuário: Moab - Detalhes: Nome: João Carlos, CPF: 04772795545
+2025-04-05 16:01:35 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 16:14:14 - INFO - Ação: Logout - Usuário: supervisor
+2025-04-05 16:14:21 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 16:14:48 - INFO - Ação: Logout - Usuário: Moab
+2025-04-05 16:14:53 - INFO - Ação: Login bem-sucedido - Usuário: supervisor
+2025-04-05 16:29:48 - INFO - Ação: Logout - Usuário: supervisor
+2025-04-05 16:29:54 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 16:30:11 - INFO - Ação: Logout - Usuário: Rafael
+2025-04-05 16:30:15 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-05 16:30:48 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Cheiro de Pizza, Alterações: minimo_garantido: S -> N, taxa_total_cobrada: 8.0 -> 8, taxa_total_entregador: 6.0 -> 6, taxa_total_cobrada_fim_semana:  -> None, taxa_total_entregador_fim_semana:  -> None, dias_diferentes:  -> []
+2025-04-05 16:36:26 - INFO - Ação: Logout - Usuário: Moab
+2025-04-05 16:36:31 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 16:42:12 - INFO - Ação: Logout - Usuário: Rafael
+2025-04-05 16:42:17 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 16:46:48 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-05 17:10:07 - INFO - Ação: Logout - Usuário: Rafael
+2025-04-05 17:10:11 - INFO - Ação: Login bem-sucedido - Usuário: Moab

@@ -534,4 +534,200 @@ input[type="datetime-local"] {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #2C5282;
+}
+
+/* Estilização melhorada para a tabela de diárias */
+.table-striped > tbody > tr {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #f8f9fa;
+    border-left: 4px solid #e9ecef;
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+    background-color: #ffffff;
+    border-left: 4px solid #dee2e6;
+}
+
+.table-striped > tbody > tr:hover {
+    background-color: #f0f7ff;
+    border-left: 4px solid var(--primary-color);
+    transform: translateX(2px);
+}
+
+/* Cabeçalho da tabela mais destacado */
+.table thead th {
+    background: linear-gradient(135deg, var(--primary-color), #2C5282);
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-align: left;
+    border-bottom: none;
+}
+
+/* Células da tabela mais organizadas */
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.95rem;
+}
+
+/* Destaque para informações importantes */
+.table td[data-label="Data e Hora de Início"],
+.table td[data-label="Data e Hora de Fim"] {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.table td[data-label="Empresa"] {
+    font-weight: 600;
+    color: #2C5282;
+}
+
+.table td[data-label="Entregador"] {
+    font-weight: 500;
+    color: #4A5568;
+}
+
+/* Container da tabela com sombra e borda arredondada */
+.table-responsive {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+}
+
+/* Espaçamento entre linhas */
+.table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Valores monetários mais destacados */
+.table td[data-label="Taxa Total Cobrada"],
+.table td[data-label="Taxa Total Entregador"] {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+    color: #2D3748;
+}
+
+/* Status e badges */
+.badge {
+    padding: 0.5em 1em;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Container dos filtros mais destacado */
+.card.mb-3 {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    background: linear-gradient(to right, #ffffff, #f8f9fa);
+}
+
+.card.mb-3 .card-body {
+    padding: 1.5rem;
+}
+
+/* Melhorias nos inputs de filtro */
+.form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(43, 108, 176, 0.15);
+}
+
+/* Separador visual entre grupos de informações */
+.table td::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 70%;
+    width: 1px;
+    background: #e9ecef;
+}
+
+.table td:last-child::after {
+    display: none;
+}
+
+/* Indicador visual para valores diferentes */
+.table td[data-label="Mínimo Garantido"] {
+    position: relative;
+}
+
+.table td[data-label="Mínimo Garantido"]::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.table td[data-label="Mínimo Garantido"]:contains('Sim')::before {
+    background-color: #48BB78;
+}
+
+.table td[data-label="Mínimo Garantido"]:contains('Não')::before {
+    background-color: #F56565;
+}
+
+/* Melhorias na responsividade */
+@media (max-width: 768px) {
+    .table td {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .table td[data-label]::before {
+        color: #718096;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .table-responsive {
+        padding: 0.5rem;
+    }
+
+    .card.mb-3 .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Animação suave ao carregar novos dados */
+.table tbody tr {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 } 
