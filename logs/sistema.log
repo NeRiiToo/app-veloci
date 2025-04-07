@@ -212,3 +212,41 @@
 2025-04-05 16:46:48 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
 2025-04-05 17:10:07 - INFO - Ação: Logout - Usuário: Rafael
 2025-04-05 17:10:11 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 13:29:37 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 13:34:48 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Carvão, Entregador: Adeilton Ferreira Souza , Período: 2025-04-07 13:34:00 até 2025-04-07 19:19:00, Tipo valor: hora, Taxa cobrada: 63.25, Taxa entregador: 40.25
+2025-04-07 13:38:16 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 13:38:20 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-07 13:45:11 - INFO - Ação: Logout - Usuário: Rafael
+2025-04-07 13:45:15 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 13:53:40 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Carvão, Entregador: Adilton Brito Viana , Período: 2025-04-07 13:53:00 até 2025-04-07 19:59:00, Taxa cobrada: 67.1, Taxa entregador: 42.7
+2025-04-07 13:55:10 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Carvão, Entregador: Adrian de Araujo Braga , Período: 2025-04-07 12:54:00 até 2025-04-07 17:55:00, Taxa cobrada: 55.18, Taxa entregador: 35.12
+2025-04-07 13:59:48 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 13:59:53 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-07 14:00:31 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Adeilton Ferreira Souza , Período: 2025-04-07 11:00:00 até 2025-04-07 18:00:00, Taxa cobrada: 77.0, Taxa entregador: 49.0
+2025-04-07 14:01:48 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Pizza Hut Ondina, Entregador: Adriano Almeida Mota, Período: 2025-04-07 11:01:00 até 2025-04-07 18:01:00, Taxa cobrada: 0, Taxa entregador: 0
+2025-04-07 14:09:03 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-07 14:10:39 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 14:11:46 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: '<=' not supported between instances of 'str' and 'datetime.datetime'
+2025-04-07 14:13:28 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Carvão, Entregador: Adson melo de oliveira , Período: 2025-04-07 10:18:00 até 2025-04-07 19:13:00, Taxa cobrada: 98.08, Taxa entregador: 62.42
+2025-04-07 14:16:06 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 14:16:22 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Rafael
+2025-04-07 14:16:47 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 14:17:22 - INFO - Ação: Usuário editado com sucesso - Usuário: Moab - Detalhes: Rafael
+2025-04-07 14:17:27 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 14:17:31 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-07 14:18:27 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-07 14:20:23 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Adeilton Ferreira Souza , Período: 2025-04-07 20:03:00 até 2025-04-07 23:19:00, Taxa cobrada: 35.93, Taxa entregador: 22.87
+2025-04-07 14:23:15 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Aelson Santos Santana Júnior , Período: 2025-04-07 10:15:00 até 2025-04-07 14:23:00, Taxa cobrada: 45.47, Taxa entregador: 28.93
+2025-04-07 14:30:29 - INFO - Ação: Logout - Usuário: Rafael
+2025-04-07 14:30:33 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 14:31:16 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - Paralela, Alterações: taxa_total_cobrada: 16.0 -> 16, taxa_total_entregador: 13.0 -> 13, taxa_total_cobrada_fim_semana: 16.0 -> 16, taxa_total_entregador_fim_semana: 15.0 -> 15, dias_diferentes: 5,6,4 -> []
+2025-04-07 14:34:09 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 14:34:17 - INFO - Ação: Login bem-sucedido - Usuário: admin
+2025-04-07 14:34:24 - INFO - Ação: Logout - Usuário: admin
+2025-04-07 14:34:31 - INFO - Ação: Login bem-sucedido - Usuário: admin
+2025-04-07 14:34:58 - INFO - Ação: Usuário editado com sucesso - Usuário: admin - Detalhes: admin
+2025-04-07 14:35:01 - INFO - Ação: Logout - Usuário: admin
+2025-04-07 14:35:15 - INFO - Ação: Login bem-sucedido - Usuário: admin
+2025-04-07 14:35:34 - INFO - Ação: Usuário editado com sucesso - Usuário: admin - Detalhes: Moab
+2025-04-07 14:35:39 - INFO - Ação: Logout - Usuário: admin
+2025-04-07 14:35:43 - INFO - Ação: Login bem-sucedido - Usuário: Moab

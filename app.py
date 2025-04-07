@@ -8,6 +8,8 @@ import io
 import csv
 from functools import wraps
 import math
+import shutil
+import hashlib
 
 # Configuração do sistema de logs
 def setup_logger():
@@ -46,7 +48,7 @@ def setup_logger():
 logger = setup_logger()
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta_aqui'  # Necessário para sessões
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_temporaria_para_desenvolvimento')  # Usa variável de ambiente ou chave temporária
 
 # Configuração dos arquivos de dados
 EMPRESAS_FILE = 'empresas.csv'
@@ -128,7 +130,8 @@ def carregar_empresas():
     return []
 
 def salvar_empresas(df):
-    df.to_csv(EMPRESAS_FILE, index=False)
+    """Salva as empresas com backup e verificação"""
+    return salvar_dados(EMPRESAS_FILE, df)
 
 def carregar_entregadores():
     if os.path.exists(ENTREGADORES_FILE):
@@ -153,7 +156,11 @@ def carregar_entregadores():
     return []
 
 def salvar_entregadores(df):
-    df.to_csv(ENTREGADORES_FILE, index=False)
+    """Salva os entregadores com backup e verificação"""
+    return salvar_dados(ENTREGADORES_FILE, df)
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -178,14 +185,13 @@ def login():
             usuarios_encontrados = df[df['username'] == username]
             if usuarios_encontrados.empty:
                 print(f"Usuário não encontrado: {username}")
-                return render_template('login.html', error='Usuário não encontrado')
+                return render_template('login.html', error='Usuário ou senha incorretos')
             
             usuario = usuarios_encontrados.iloc[0]
-            print(f"Senha fornecida: {senha}")
-            print(f"Senha no banco: {usuario['senha']}")
+            senha_hash = hash_password(senha)
             
             # Compara as senhas
-            if str(usuario['senha']) == str(senha):
+            if str(usuario['senha']) == senha_hash:
                 session['username'] = username
                 session['permissao'] = usuario['permissao']
                 log_action('Login bem-sucedido', username)
@@ -194,12 +200,12 @@ def login():
             else:
                 log_action('Tentativa de login falha - Senha incorreta', username)
                 print(f"Senha incorreta para {username}")
-                return render_template('login.html', error='Senha incorreta')
+                return render_template('login.html', error='Usuário ou senha incorretos')
                 
         except Exception as e:
             print(f"Erro no login: {str(e)}")
             log_error('Erro no login', username, str(e))
-            return render_template('login.html', error=f'Erro ao fazer login: {str(e)}')
+            return render_template('login.html', error='Erro ao processar login. Tente novamente.')
     
     return render_template('login.html')
 
@@ -236,7 +242,7 @@ def cadastro_usuario():
 
             novo_usuario = {
                 'username': username,
-                'senha': senha,
+                'senha': hash_password(senha),
                 'permissao': permissao,
                 'empresas_vinculadas': '|'.join(empresas_vinculadas) if empresas_vinculadas else ''
             }
@@ -336,7 +342,7 @@ def editar_usuario():
         mask = df['username'] == username
         df.loc[mask, 'permissao'] = nova_permissao
         if nova_senha:
-            df.loc[mask, 'senha'] = nova_senha
+            df.loc[mask, 'senha'] = hash_password(nova_senha)
         df.loc[mask, 'empresas_vinculadas'] = '|'.join(empresas_vinculadas) if empresas_vinculadas else ''
 
         df.to_csv(USUARIOS_FILE, index=False)
@@ -371,14 +377,64 @@ def carregar_dados():
         print(f"Erro ao carregar dados: {str(e)}")
     return pd.DataFrame(columns=['tipo', 'nome', 'cpf', 'veiculo', 'tipo_valor', 'minimo_garantido', 'taxa_total_cobrada', 'taxa_total_entregador', 'status']), pd.DataFrame(columns=['nome', 'cpf', 'status'])
 
-def salvar_dados(df_empresas, df_entregadores):
-    # Converte os tipos de dados antes de salvar
-    df_empresas['taxa_total_cobrada'] = pd.to_numeric(df_empresas['taxa_total_cobrada'], errors='coerce')
-    df_empresas['taxa_total_entregador'] = pd.to_numeric(df_empresas['taxa_total_entregador'], errors='coerce')
-    df_empresas['cpf'] = df_empresas['cpf'].astype(str)
-    df_entregadores['cpf'] = df_entregadores['cpf'].astype(str)
-    df_empresas.to_csv(EMPRESAS_FILE, index=False)
-    df_entregadores.to_csv(ENTREGADORES_FILE, index=False)
+def salvar_dados(arquivo, df):
+    """Salva dados em um arquivo com backup e verificação"""
+    try:
+        # Verifica permissões de escrita
+        if os.path.exists(arquivo) and not os.access(arquivo, os.W_OK):
+            raise Exception(f"Sem permissão para escrever no arquivo {arquivo}")
+            
+        # Cria backup
+        if not criar_backup(arquivo):
+            raise Exception("Erro ao criar backup")
+            
+        # Verifica se o DataFrame está vazio
+        if df.empty:
+            raise Exception("DataFrame vazio não pode ser salvo")
+            
+        # Verifica se o diretório existe
+        diretorio = os.path.dirname(arquivo)
+        if diretorio and not os.path.exists(diretorio):
+            os.makedirs(diretorio)
+            
+        # Salva o arquivo
+        if arquivo.endswith('.csv'):
+            df.to_csv(arquivo, index=False)
+        elif arquivo.endswith('.xlsx'):
+            df.to_excel(arquivo, index=False)
+        else:
+            raise Exception("Formato de arquivo não suportado")
+            
+        # Verifica se o arquivo foi salvo corretamente
+        if not os.path.exists(arquivo):
+            raise Exception("Arquivo não foi criado após tentativa de salvamento")
+            
+        # Tenta ler o arquivo para verificar se não está corrompido
+        if arquivo.endswith('.csv'):
+            pd.read_csv(arquivo)
+        elif arquivo.endswith('.xlsx'):
+            pd.read_excel(arquivo)
+            
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar dados: {str(e)}")
+        return False
+
+def salvar_empresas(df):
+    """Salva as empresas com backup e verificação"""
+    return salvar_dados(EMPRESAS_FILE, df)
+
+def salvar_entregadores(df):
+    """Salva os entregadores com backup e verificação"""
+    return salvar_dados(ENTREGADORES_FILE, df)
+
+def salvar_diarias(df):
+    """Salva as diárias com backup e verificação"""
+    return salvar_dados(DIARIAS_FILE, df)
+
+def salvar_usuarios(df):
+    """Salva os usuários com backup e verificação"""
+    return salvar_dados(USUARIOS_FILE, df)
 
 def carregar_escala():
     if os.path.exists(ESCALA_FILE):
@@ -407,8 +463,8 @@ def carregar_diarias():
             # Verifica se todas as colunas necessárias existem
             colunas_necessarias = [
                 'Data e hora de início', 'Data e hora de fim', 'Empresa', 
-                'Tipo de veículo', 'Entregador', 'Taxa total cobrada', 
-                'Taxa total entregador', 'Usuário que registrou'
+                'Tipo Veiculo', 'Entregador', 'Taxa total cobrada', 
+                'Taxa total entregador', 'usuario_registro'
             ]
             
             for coluna in colunas_necessarias:
@@ -470,11 +526,11 @@ def carregar_diarias():
                                 'Data e hora de início': data_inicio,
                                 'Data e hora de fim': data_fim,
                                 'Empresa': empresa,
-                                'Tipo de veículo': 'Moto',
+                                'Tipo Veiculo': 'Moto',
                                 'Entregador': entregador,
                                 'Taxa total cobrada': taxa_total_cobrada,
                                 'Taxa total entregador': taxa_total_entregador,
-                                'Usuário que registrou': usuario
+                                'usuario_registro': usuario
                             })
                     except Exception as e:
                         print(f"Erro ao processar log: {str(e)}")
@@ -505,59 +561,16 @@ def carregar_diarias():
             # Se o arquivo não existe, cria um DataFrame vazio
             return pd.DataFrame(columns=[
                 'Data e hora de início', 'Data e hora de fim', 'Empresa', 
-                'Tipo de veículo', 'Entregador', 'Taxa total cobrada', 
-                'Taxa total entregador', 'Usuário que registrou'
+                'Tipo Veiculo', 'Entregador', 'Taxa total cobrada', 
+                'Taxa total entregador', 'usuario_registro'
             ])
     except Exception as e:
         print(f"Erro ao carregar diárias: {str(e)}")
         return pd.DataFrame(columns=[
             'Data e hora de início', 'Data e hora de fim', 'Empresa', 
-            'Tipo de veículo', 'Entregador', 'Taxa total cobrada', 
-            'Taxa total entregador', 'Usuário que registrou'
+            'Tipo Veiculo', 'Entregador', 'Taxa total cobrada', 
+            'Taxa total entregador', 'usuario_registro'
         ])
-
-def salvar_diarias(df_diarias):
-    try:
-        # Garante que o diretório data existe
-        if not os.path.exists('data'):
-            os.makedirs('data')
-        
-        # Garante que todas as colunas necessárias existem
-        colunas_necessarias = [
-            'Data e hora de início', 'Data e hora de fim', 'Empresa', 
-            'Tipo Veiculo', 'Entregador', 'CPF', 'Taxa total cobrada', 
-            'Taxa total entregador', 'Taxa mínima cobrada', 'Taxa mínima entregador',
-            'usuario_registro'
-        ]
-        
-        for coluna in colunas_necessarias:
-            if coluna not in df_diarias.columns:
-                df_diarias[coluna] = ''
-        
-        # Converte as colunas de data para string
-        df_diarias['Data e hora de início'] = df_diarias['Data e hora de início'].astype(str)
-        df_diarias['Data e hora de fim'] = df_diarias['Data e hora de fim'].astype(str)
-        
-        # Remove duplicatas
-        df_diarias = df_diarias.drop_duplicates(
-            subset=['Data e hora de início', 'Data e hora de fim', 'Empresa', 'Entregador']
-        )
-        
-        # Ordena por data de início
-        df_diarias = df_diarias.sort_values('Data e hora de início')
-        
-        # Salva o arquivo
-        arquivo_diarias = os.path.join('data', 'diarias.xlsx')
-        df_diarias.to_excel(arquivo_diarias, index=False)
-        
-        # Verifica se o arquivo foi salvo corretamente
-        if not os.path.exists(arquivo_diarias):
-            raise Exception("Erro ao salvar arquivo de diárias")
-            
-        return True
-    except Exception as e:
-        print(f"Erro ao salvar arquivo de diárias: {str(e)}")
-        return False
 
 @app.route('/')
 @login_required
@@ -591,14 +604,34 @@ def api_cadastrar():
         tipo = data.get('tipo')
         
         if tipo == 'empresa':
+            # Validação de campos obrigatórios
+            campos_obrigatorios = ['nome', 'veiculo', 'tipo_valor', 'minimo_garantido', 
+                                 'taxa_total_cobrada', 'taxa_total_entregador']
+            for campo in campos_obrigatorios:
+                if not data.get(campo):
+                    return jsonify({'status': 'error', 'message': f'Campo {campo} é obrigatório'}), 400
+            
+            # Validação de valores numéricos
+            try:
+                taxa_total_cobrada = float(data['taxa_total_cobrada'])
+                taxa_total_entregador = float(data['taxa_total_entregador'])
+                if taxa_total_cobrada < 0 or taxa_total_entregador < 0:
+                    return jsonify({'status': 'error', 'message': 'Taxas não podem ser negativas'}), 400
+            except ValueError:
+                return jsonify({'status': 'error', 'message': 'Valores de taxa inválidos'}), 400
+            
+            # Validação de duplicidade
             empresas = carregar_empresas()
+            if data['nome'] in [emp['nome'] for emp in empresas]:
+                return jsonify({'status': 'error', 'message': 'Empresa já cadastrada'}), 400
+            
             nova_empresa = {
                 'nome': data['nome'],
                 'veiculo': data['veiculo'],
                 'tipo_valor': data['tipo_valor'],
                 'minimo_garantido': data['minimo_garantido'],
-                'taxa_total_cobrada': float(data['taxa_total_cobrada']),
-                'taxa_total_entregador': float(data['taxa_total_entregador']),
+                'taxa_total_cobrada': taxa_total_cobrada,
+                'taxa_total_entregador': taxa_total_entregador,
                 'taxa_total_cobrada_fim_semana': float(data['taxa_total_cobrada_fim_semana']) if data.get('taxa_total_cobrada_fim_semana') else None,
                 'taxa_total_entregador_fim_semana': float(data['taxa_total_entregador_fim_semana']) if data.get('taxa_total_entregador_fim_semana') else None,
                 'dias_diferentes': ','.join(map(str, data.get('dias_diferentes', []))),
@@ -867,114 +900,11 @@ def exportar_excel():
         log_error('Erro ao exportar relatório', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/api/diarias', methods=['GET'])
-def get_diarias():
-    try:
-        df_diarias = carregar_diarias()
-        print(f"Total de diárias carregadas: {len(df_diarias)}")  # Log para debug
-        
-        if df_diarias.empty:
-            print("DataFrame de diárias está vazio")  # Log para debug
-            return jsonify([])
-            
-        # Verifica permissão do usuário atual
-        usuario_atual = session.get('username')
-        permissao_atual = session.get('permissao')
-        print(f"Usuário atual: {usuario_atual}, Permissão: {permissao_atual}")  # Log para debug
-        
-        # Se for supervisor, filtra apenas suas diárias
-        if permissao_atual == 'supervisor':
-            print(f"Filtrando diárias para o supervisor: {usuario_atual}")  # Log para debug
-            print(f"Valores únicos na coluna usuario_registro: {df_diarias['usuario_registro'].unique()}")  # Log para debug
-            df_diarias = df_diarias[df_diarias['usuario_registro'].str.strip() == usuario_atual.strip()]
-            print(f"Diárias após filtro: {len(df_diarias)}")  # Log para debug
-        
-        # Garante que todas as colunas necessárias existam
-        colunas_necessarias = [
-            'Data e hora de início',
-            'Data e hora de fim',
-            'Empresa',
-            'Tipo Veiculo',
-            'Entregador',
-            'CPF',
-            'Taxa total cobrada',
-            'Taxa total entregador',
-            'Taxa mínima cobrada',
-            'Taxa mínima entregador',
-            'usuario_registro'
-        ]
-        
-        for coluna in colunas_necessarias:
-            if coluna not in df_diarias.columns:
-                df_diarias[coluna] = ''
-        
-        # Converte os valores numéricos e substitui NaN por 0
-        df_diarias['Taxa total cobrada'] = pd.to_numeric(df_diarias['Taxa total cobrada'], errors='coerce').fillna(0)
-        df_diarias['Taxa total entregador'] = pd.to_numeric(df_diarias['Taxa total entregador'], errors='coerce').fillna(0)
-        
-        # Remove a coluna usuario_registro do resultado final
-        colunas_retorno = [col for col in colunas_necessarias if col != 'usuario_registro']
-        diarias = df_diarias[colunas_retorno].to_dict('records')
-        
-        print(f"Total de diárias retornadas: {len(diarias)}")  # Log para debug
-        return jsonify(diarias)
-        
-    except Exception as e:
-        print(f"Erro ao obter diárias: {str(e)}")  # Log para debug
-        return jsonify([])
-
-def processar_taxas_empresa(empresa, data_inicio, data_fim=None):
-    try:
-        # Converte a data de início para objeto datetime
-        data = datetime.strptime(data_inicio, '%Y-%m-%d %H:%M:%S')
-        dia_semana = data.weekday()  # 0 = segunda, 6 = domingo
-        
-        # Verifica se o dia da semana está na lista de dias diferentes
-        dias_diferentes = empresa.get('dias_diferentes', '')
-        if isinstance(dias_diferentes, str):
-            # Se for string, converte para lista de números
-            dias_diferentes = [int(d) for d in dias_diferentes.split(',') if d.strip().isdigit()]
-        
-        # Verifica se é fim de semana ou dia diferente
-        if dia_semana in dias_diferentes:
-            taxa_total_cobrada_base = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
-            taxa_total_entregador_base = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
-        else:
-            taxa_total_cobrada_base = float(empresa['taxa_total_cobrada'])
-            taxa_total_entregador_base = float(empresa['taxa_total_entregador'])
-        
-        # Se for valor por hora, calcula o valor total baseado no período
-        if empresa.get('tipo_valor') == 'hora' and data_fim:
-            data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d %H:%M:%S')
-            # Calcula a diferença em horas com precisão de minutos
-            diferenca = data_fim_dt - data
-            horas_trabalhadas = diferenca.total_seconds() / 3600  # Converte para horas decimais
-            
-            # Calcula o valor total
-            taxa_total_cobrada = taxa_total_cobrada_base * horas_trabalhadas
-            taxa_total_entregador = taxa_total_entregador_base * horas_trabalhadas
-        else:
-            # Se for valor único, usa o valor base
-            taxa_total_cobrada = taxa_total_cobrada_base
-            taxa_total_entregador = taxa_total_entregador_base
-            
-        return {
-            'taxa_total_cobrada': round(taxa_total_cobrada, 2),
-            'taxa_total_entregador': round(taxa_total_entregador, 2),
-            'minimo_garantido': empresa.get('minimo_garantido', 'N')
-        }
-    except Exception as e:
-        print(f"Erro ao processar taxas da empresa: {str(e)}")
-        return {
-            'taxa_total_cobrada': 0.0,
-            'taxa_total_entregador': 0.0,
-            'minimo_garantido': 'N'
-        }
-
 @app.route('/api/diaria', methods=['POST'])
 def api_diaria():
     try:
         data = request.get_json()
+        print(f"Dados recebidos: {data}")  # Log para debug
         
         # Validação dos dados
         if not all(k in data for k in ['data_inicio', 'data_fim', 'empresa', 'entregador']):
@@ -984,7 +914,8 @@ def api_diaria():
         try:
             data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M')
             data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M')
-        except ValueError:
+        except ValueError as e:
+            print(f"Erro ao converter datas: {str(e)}")  # Log para debug
             return jsonify({'status': 'error', 'message': 'Formato de data inválido'}), 400
             
         # Valida se a data de fim é maior que a data de início
@@ -994,10 +925,17 @@ def api_diaria():
         # Valida se o período é maior que 24 horas
         if (data_fim - data_inicio).total_seconds() > 86400:  # 24 horas em segundos
             return jsonify({'status': 'error', 'message': 'O período não pode ser maior que 24 horas'}), 400
+            
+        # Valida período mínimo (30 minutos)
+        if (data_fim - data_inicio).total_seconds() < 1800:  # 30 minutos em segundos
+            return jsonify({'status': 'error', 'message': 'O período mínimo é de 30 minutos'}), 400
         
         # Carrega as empresas e entregadores
         empresas = carregar_empresas()
         entregadores = carregar_entregadores()
+        
+        print(f"Total de empresas: {len(empresas)}")  # Log para debug
+        print(f"Total de entregadores: {len(entregadores)}")  # Log para debug
         
         # Valida empresa
         empresa = next((emp for emp in empresas if emp['nome'] == data['empresa']), None)
@@ -1009,14 +947,39 @@ def api_diaria():
         if not entregador:
             return jsonify({'status': 'error', 'message': 'Entregador não encontrado'}), 400
             
+        # Verifica sobreposição de horários
+        df_diarias = carregar_diarias()
+        print(f"Total de diárias existentes: {len(df_diarias)}")  # Log para debug
+        
+        sobreposicao = df_diarias[
+            (df_diarias['Entregador'] == data['entregador']) &
+            (
+                ((df_diarias['Data e hora de início'] <= data_inicio.strftime('%Y-%m-%d %H:%M:%S')) & (df_diarias['Data e hora de fim'] > data_inicio.strftime('%Y-%m-%d %H:%M:%S'))) |
+                ((df_diarias['Data e hora de início'] < data_fim.strftime('%Y-%m-%d %H:%M:%S')) & (df_diarias['Data e hora de fim'] >= data_fim.strftime('%Y-%m-%d %H:%M:%S'))) |
+                ((df_diarias['Data e hora de início'] >= data_inicio.strftime('%Y-%m-%d %H:%M:%S')) & (df_diarias['Data e hora de fim'] <= data_fim.strftime('%Y-%m-%d %H:%M:%S')))
+            )
+        ]
+        
+        if not sobreposicao.empty:
+            return jsonify({'status': 'error', 'message': 'Já existe uma diária registrada para este entregador no período informado'}), 400
+            
+        # Verifica limite de diárias por dia
+        diarias_dia = df_diarias[
+            (df_diarias['Entregador'] == data['entregador']) &
+            (df_diarias['Data e hora de início'].str[:10] == data_inicio.strftime('%Y-%m-%d'))
+        ]
+        
+        if len(diarias_dia) >= 3:  # Limite de 3 diárias por dia
+            return jsonify({'status': 'error', 'message': 'Limite de diárias diárias atingido para este entregador'}), 400
+            
         # Processa as taxas
         taxas = processar_taxas_empresa(
             empresa, 
             data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
             data_fim.strftime('%Y-%m-%d %H:%M:%S')
         )
-        taxa_total_cobrada = taxas['taxa_total_cobrada']
-        taxa_total_entregador = taxas['taxa_total_entregador']
+            taxa_total_cobrada = taxas['taxa_total_cobrada']
+            taxa_total_entregador = taxas['taxa_total_entregador']
         
         # Cria o novo registro
         nova_diaria = {
@@ -1030,33 +993,19 @@ def api_diaria():
             'Taxa total entregador': taxa_total_entregador,
             'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
             'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
-            'usuario_registro': session.get('username'),
-            'tipo_valor': empresa.get('tipo_valor', 'unico')  # Adiciona o tipo de valor ao registro
+            'usuario_registro': session.get('username')
         }
         
-        # Carrega as diárias existentes
-        df_diarias = carregar_diarias()
-        
-        # Verifica se já existe uma diária igual
-        diaria_existente = df_diarias[
-            (df_diarias['Data e hora de início'] == nova_diaria['Data e hora de início']) &
-            (df_diarias['Data e hora de fim'] == nova_diaria['Data e hora de fim']) &
-            (df_diarias['Empresa'] == nova_diaria['Empresa']) &
-            (df_diarias['Entregador'] == nova_diaria['Entregador'])
-        ]
-        
-        if not diaria_existente.empty:
-            return jsonify({'status': 'error', 'message': 'Esta diária já está registrada'}), 400
+        print(f"Nova diária a ser adicionada: {nova_diaria}")  # Log para debug
         
         # Adiciona a nova diária
-        df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
+            df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
         
         # Salva as diárias
         if salvar_diarias(df_diarias):
             log_action('Diária registrada', session.get('username'), 
                       f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
                       f"Período: {data_inicio} até {data_fim}, "
-                      f"Tipo valor: {empresa.get('tipo_valor', 'unico')}, "
                       f"Taxa cobrada: {taxa_total_cobrada}, "
                       f"Taxa entregador: {taxa_total_entregador}")
             return jsonify({'status': 'success'})
@@ -1067,6 +1016,7 @@ def api_diaria():
             
     except Exception as e:
         erro_msg = str(e)
+        print(f"Erro ao registrar diária: {erro_msg}")  # Log para debug
         log_error('Erro ao registrar diária', session.get('username'), erro_msg)
         return jsonify({'status': 'error', 'message': erro_msg}), 500
 
@@ -1304,6 +1254,147 @@ def get_empresas_filtro():
         
     except Exception as e:
         print(f"Erro ao carregar empresas para filtro: {str(e)}")
+        return jsonify([])
+
+def criar_backup(arquivo):
+    """Cria um backup do arquivo antes de modificá-lo"""
+    try:
+        if not os.path.exists(arquivo):
+            return True
+            
+        # Cria diretório de backup se não existir
+        if not os.path.exists('backup'):
+            os.makedirs('backup')
+            
+        # Gera nome do arquivo de backup
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nome_arquivo = os.path.basename(arquivo)
+        arquivo_backup = os.path.join('backup', f'{nome_arquivo}_{timestamp}.bak')
+        
+        # Copia o arquivo para backup
+        shutil.copy2(arquivo, arquivo_backup)
+        
+        # Mantém apenas os 5 backups mais recentes
+        backups = sorted([f for f in os.listdir('backup') if f.startswith(nome_arquivo)], reverse=True)
+        for backup in backups[5:]:
+            os.remove(os.path.join('backup', backup))
+            
+        return True
+    except Exception as e:
+        print(f"Erro ao criar backup: {str(e)}")
+        return False
+
+def processar_taxas_empresa(empresa, data_inicio, data_fim=None):
+    try:
+        # Converte a data de início para objeto datetime
+        data = datetime.strptime(data_inicio, '%Y-%m-%d %H:%M:%S')
+        dia_semana = data.weekday()  # 0 = segunda, 6 = domingo
+        
+        # Verifica se o dia da semana está na lista de dias diferentes
+        dias_diferentes = empresa.get('dias_diferentes', '')
+        if isinstance(dias_diferentes, str):
+            # Se for string, converte para lista de números
+            dias_diferentes = [int(d) for d in dias_diferentes.split(',') if d.strip().isdigit()]
+        
+        # Verifica se é fim de semana ou dia diferente
+        if dia_semana in dias_diferentes:
+            taxa_total_cobrada_base = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
+            taxa_total_entregador_base = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
+        else:
+            taxa_total_cobrada_base = float(empresa['taxa_total_cobrada'])
+            taxa_total_entregador_base = float(empresa['taxa_total_entregador'])
+        
+        # Se for valor por hora, calcula o valor total baseado no período
+        if empresa.get('tipo_valor') == 'hora' and data_fim:
+            try:
+                data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d %H:%M:%S')
+                # Calcula a diferença em horas com precisão de minutos
+                diferenca = data_fim_dt - data
+                horas_trabalhadas = diferenca.total_seconds() / 3600  # Converte para horas decimais
+                
+                # Garante que o valor não seja negativo
+                if horas_trabalhadas < 0:
+                    raise ValueError("O período não pode ser negativo")
+                
+                # Calcula o valor total
+                taxa_total_cobrada = taxa_total_cobrada_base * horas_trabalhadas
+                taxa_total_entregador = taxa_total_entregador_base * horas_trabalhadas
+            except ValueError as e:
+                raise ValueError(f"Erro ao calcular período: {str(e)}")
+        else:
+            # Se for valor único, usa o valor base
+            taxa_total_cobrada = taxa_total_cobrada_base
+            taxa_total_entregador = taxa_total_entregador_base
+            
+        # Garante que os valores não sejam negativos
+        taxa_total_cobrada = max(0, taxa_total_cobrada)
+        taxa_total_entregador = max(0, taxa_total_entregador)
+            
+        return {
+            'taxa_total_cobrada': round(taxa_total_cobrada, 2),
+            'taxa_total_entregador': round(taxa_total_entregador, 2),
+            'minimo_garantido': empresa.get('minimo_garantido', 'N'),
+            'tipo_valor': empresa.get('tipo_valor', 'unico'),
+            'horas_trabalhadas': round(horas_trabalhadas, 2) if empresa.get('tipo_valor') == 'hora' and data_fim else None
+        }
+    except Exception as e:
+        print(f"Erro ao processar taxas da empresa: {str(e)}")
+        raise ValueError(f"Erro ao processar taxas: {str(e)}")
+
+@app.route('/api/diarias', methods=['GET'])
+def get_diarias():
+    try:
+        df_diarias = carregar_diarias()
+        print(f"Total de diárias carregadas: {len(df_diarias)}")  # Log para debug
+        
+        if df_diarias.empty:
+            print("DataFrame de diárias está vazio")  # Log para debug
+            return jsonify([])
+            
+        # Verifica permissão do usuário atual
+        usuario_atual = session.get('username')
+        permissao_atual = session.get('permissao')
+        print(f"Usuário atual: {usuario_atual}, Permissão: {permissao_atual}")  # Log para debug
+        
+        # Se for supervisor, filtra apenas suas diárias
+        if permissao_atual == 'supervisor':
+            print(f"Filtrando diárias para o supervisor: {usuario_atual}")  # Log para debug
+            print(f"Valores únicos na coluna usuario_registro: {df_diarias['usuario_registro'].unique()}")  # Log para debug
+            df_diarias = df_diarias[df_diarias['usuario_registro'].str.strip() == usuario_atual.strip()]
+            print(f"Diárias após filtro: {len(df_diarias)}")  # Log para debug
+        
+        # Garante que todas as colunas necessárias existam
+        colunas_necessarias = [
+            'Data e hora de início',
+            'Data e hora de fim',
+            'Empresa',
+            'Tipo Veiculo',
+            'Entregador',
+            'CPF',
+            'Taxa total cobrada',
+            'Taxa total entregador',
+            'Taxa mínima cobrada',
+            'Taxa mínima entregador',
+            'usuario_registro'
+        ]
+        
+        for coluna in colunas_necessarias:
+            if coluna not in df_diarias.columns:
+                df_diarias[coluna] = ''
+        
+        # Converte os valores numéricos e substitui NaN por 0
+        df_diarias['Taxa total cobrada'] = pd.to_numeric(df_diarias['Taxa total cobrada'], errors='coerce').fillna(0)
+        df_diarias['Taxa total entregador'] = pd.to_numeric(df_diarias['Taxa total entregador'], errors='coerce').fillna(0)
+        
+        # Remove a coluna usuario_registro do resultado final
+        colunas_retorno = [col for col in colunas_necessarias if col != 'usuario_registro']
+        diarias = df_diarias[colunas_retorno].to_dict('records')
+        
+        print(f"Total de diárias retornadas: {len(diarias)}")  # Log para debug
+        return jsonify(diarias)
+        
+    except Exception as e:
+        print(f"Erro ao obter diárias: {str(e)}")  # Log para debug
         return jsonify([])
 
 if __name__ == '__main__':

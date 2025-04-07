@@ -1,6 +1,6 @@
 username,senha,permissao,empresas_vinculadas
-admin,123456,ADM,
-Moab,123456,ADM,
-supervisor,123456,supervisor,Carvão
-Rafael,2010,supervisor,Carvão|Cheiro de Pizza|Pizza Hut Ondina|Cantina Volpi - ondina
-Marcos,Juan112233,supervisor,Cantina Volpi - Paralela|Cantina Volpi - Itaigara
+admin,7d39044c2cdb7d6cac3daa13da26ea69ded1f810d4157cb39af087ea156619ab,ADM,
+Moab,a3f0e945a352c13038b1d4e7f5c465fa4295fc8711b4cc8df17071109b089ed5,ADM,
+supervisor,8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92,supervisor,Carvão
+Rafael,7d12ba56e9f8b3dc64f77c87318c4f37bc12cfbf1a37573cdf3e4fa683f20155,supervisor,Carvão|Cheiro de Pizza|Pizza Hut Ondina|Cantina Volpi - ondina
+Marcos,8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92,supervisor,Cantina Volpi - Paralela|Cantina Volpi - Itaigara

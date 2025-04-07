@@ -1,5 +1,5 @@
 nome,veiculo,tipo_valor,minimo_garantido,taxa_total_cobrada,taxa_total_entregador,status,taxa_total_cobrada_fim_semana,taxa_total_entregador_fim_semana,dias_diferentes
-Cantina Volpi - Paralela,Cantina Volpi - Paralela,unico,N,16.0,13.0,ativo,16.0,15.0,"5,6,4"
+Cantina Volpi - Paralela,Cantina Volpi - Paralela,unico,N,16.0,13.0,ativo,16.0,15.0,
 Cantina Volpi Lauro,Cantina Volpi Lauro,unico,N,50.0,50.0,ativo,,,
 Nonni La Pasta,Nonni La Pasta,hora,N,6.5,5.0,ativo,,,
 Cantina Volpi - Itaigara,Cantina Volpi - Itaigara,unico,N,16.0,13.0,ativo,16.0,15.0,"5,6,4"
