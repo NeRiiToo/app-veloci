@@ -929,11 +929,12 @@ def processar_taxas_empresa(empresa, data_inicio):
         dia_semana = data.weekday()  # 0 = segunda, 6 = domingo
         
         # Verifica se o dia da semana está na lista de dias diferentes
-        dias_diferentes = empresa.get('dias_diferentes', [])
+        dias_diferentes = empresa.get('dias_diferentes', '')
         if isinstance(dias_diferentes, str):
             # Se for string, converte para lista de números
-            dias_diferentes = [int(d) for d in dias_diferentes.split(',') if d.isdigit()]
+            dias_diferentes = [int(d) for d in dias_diferentes.split(',') if d.strip().isdigit()]
         
+        # Verifica se é fim de semana ou dia diferente
         if dia_semana in dias_diferentes:
             taxa_total_cobrada = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
             taxa_total_entregador = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
@@ -944,7 +945,7 @@ def processar_taxas_empresa(empresa, data_inicio):
         return {
             'taxa_total_cobrada': taxa_total_cobrada,
             'taxa_total_entregador': taxa_total_entregador,
-            'minimo_garantido': empresa['minimo_garantido']
+            'minimo_garantido': empresa.get('minimo_garantido', 'N')
         }
     except Exception as e:
         print(f"Erro ao processar taxas da empresa: {str(e)}")
@@ -979,21 +980,21 @@ def api_diaria():
             return jsonify({'status': 'error', 'message': 'O período não pode ser maior que 24 horas'}), 400
         
         # Carrega as empresas e entregadores
-        df_empresas = carregar_empresas()
-        df_entregadores = carregar_entregadores()
+        empresas = carregar_empresas()
+        entregadores = carregar_entregadores()
         
         # Valida empresa
-        empresa = df_empresas[df_empresas['nome'] == data['empresa']]
-        if empresa.empty:
+        empresa = next((emp for emp in empresas if emp['nome'] == data['empresa']), None)
+        if not empresa:
             return jsonify({'status': 'error', 'message': 'Empresa não encontrada'}), 400
             
         # Valida entregador
-        entregador = df_entregadores[df_entregadores['nome'] == data['entregador']]
-        if entregador.empty:
+        entregador = next((ent for ent in entregadores if ent['nome'] == data['entregador']), None)
+        if not entregador:
             return jsonify({'status': 'error', 'message': 'Entregador não encontrado'}), 400
             
         # Processa as taxas
-        taxas = processar_taxas_empresa(empresa.iloc[0], data_inicio)
+        taxas = processar_taxas_empresa(empresa, data_inicio.strftime('%Y-%m-%d %H:%M:%S'))
         taxa_total_cobrada = taxas['taxa_total_cobrada']
         taxa_total_entregador = taxas['taxa_total_entregador']
         
@@ -1002,9 +1003,9 @@ def api_diaria():
             'Data e hora de início': data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
             'Data e hora de fim': data_fim.strftime('%Y-%m-%d %H:%M:%S'),
             'Empresa': data['empresa'],
-            'Tipo Veiculo': empresa.iloc[0]['veiculo'],
+            'Tipo Veiculo': empresa['veiculo'],
             'Entregador': data['entregador'],
-            'CPF': entregador.iloc[0]['cpf'],
+            'CPF': entregador['cpf'],
             'Taxa total cobrada': taxa_total_cobrada,
             'Taxa total entregador': taxa_total_entregador,
             'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
