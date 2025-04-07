@@ -399,7 +399,39 @@ def carregar_diarias():
     try:
         arquivo_diarias = DIARIAS_FILE
         if os.path.exists(arquivo_diarias):
+            # Tenta carregar o arquivo Excel
             df = pd.read_excel(arquivo_diarias)
+            
+            # Garante que todas as colunas necessárias existam
+            colunas_necessarias = [
+                'Data e hora de início',
+                'Data e hora de fim',
+                'Empresa',
+                'Tipo Veiculo',
+                'Entregador',
+                'CPF',
+                'Taxa total cobrada',
+                'Taxa total entregador',
+                'Taxa mínima cobrada',
+                'Taxa mínima entregador',
+                'usuario_registro'
+            ]
+            
+            # Adiciona colunas faltantes
+            for coluna in colunas_necessarias:
+                if coluna not in df.columns:
+                    df[coluna] = ''
+            
+            # Converte as colunas de data para string
+            df['Data e hora de início'] = df['Data e hora de início'].astype(str)
+            df['Data e hora de fim'] = df['Data e hora de fim'].astype(str)
+            
+            # Remove duplicatas
+            df = df.drop_duplicates(subset=['Data e hora de início', 'Data e hora de fim', 'Empresa', 'Entregador'])
+            
+            # Ordena por data de início
+            df = df.sort_values('Data e hora de início')
+            
             print(f"Arquivo de diárias carregado com sucesso. Registros encontrados: {len(df)}")
             return df
         else:
@@ -414,7 +446,8 @@ def carregar_diarias():
                 'Taxa total cobrada',
                 'Taxa total entregador',
                 'Taxa mínima cobrada',
-                'Taxa mínima entregador'
+                'Taxa mínima entregador',
+                'usuario_registro'
             ])
     except Exception as e:
         print(f"Erro ao carregar arquivo de diárias: {str(e)}")
@@ -428,7 +461,8 @@ def carregar_diarias():
             'Taxa total cobrada',
             'Taxa total entregador',
             'Taxa mínima cobrada',
-            'Taxa mínima entregador'
+            'Taxa mínima entregador',
+            'usuario_registro'
         ])
 
 def salvar_diarias(df_diarias):
@@ -439,6 +473,14 @@ def salvar_diarias(df_diarias):
         
         # Salva o arquivo na pasta data
         arquivo_diarias = DIARIAS_FILE
+        
+        # Garante que não há duplicatas
+        df_diarias = df_diarias.drop_duplicates(subset=['Data e hora de início', 'Data e hora de fim', 'Empresa', 'Entregador'])
+        
+        # Ordena por data de início
+        df_diarias = df_diarias.sort_values('Data e hora de início')
+        
+        # Salva o arquivo
         df_diarias.to_excel(arquivo_diarias, index=False)
         print(f"Arquivo salvo com sucesso em: {arquivo_diarias}")
         return True
@@ -847,49 +889,66 @@ def api_diaria():
     try:
         data = request.get_json()
         
-        empresas = pd.DataFrame(carregar_empresas())
-        entregadores = pd.DataFrame(carregar_entregadores())
-        
-        empresa = empresas[empresas['nome'] == data['empresa']].iloc[0]
-        entregador = entregadores[entregadores['nome'] == data['entregador']].iloc[0]
-        
+        # Validação dos dados
+        if not all(k in data for k in ['data_inicio', 'data_fim', 'empresa', 'entregador']):
+            return jsonify({'status': 'error', 'message': 'Dados incompletos'}), 400
+            
+        # Converte as datas para datetime
         data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M')
         data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M')
         
-        # Calcula a diferença de horas se o tipo_valor for 'hora'
-        if empresa['tipo_valor'] == 'hora':
-            diferenca_horas = (data_fim - data_inicio).total_seconds() / 3600  # Converte para horas
-            # Processa as taxas considerando o dia da semana
-            taxas = processar_taxas_empresa(empresa, data_inicio.strftime('%Y-%m-%d %H:%M:%S'))
-            # Multiplica as taxas pela quantidade de horas
-            taxa_total_cobrada = taxas['taxa_total_cobrada'] * diferenca_horas
-            taxa_total_entregador = taxas['taxa_total_entregador'] * diferenca_horas
-        else:
-            # Se não for por hora, usa as taxas normalmente
-            taxas = processar_taxas_empresa(empresa, data_inicio.strftime('%Y-%m-%d %H:%M:%S'))
-            taxa_total_cobrada = taxas['taxa_total_cobrada']
-            taxa_total_entregador = taxas['taxa_total_entregador']
+        # Carrega as empresas e entregadores
+        df_empresas = carregar_empresas()
+        df_entregadores = carregar_entregadores()
         
+        # Valida empresa
+        empresa = df_empresas[df_empresas['nome'] == data['empresa']]
+        if empresa.empty:
+            return jsonify({'status': 'error', 'message': 'Empresa não encontrada'}), 400
+            
+        # Valida entregador
+        entregador = df_entregadores[df_entregadores['nome'] == data['entregador']]
+        if entregador.empty:
+            return jsonify({'status': 'error', 'message': 'Entregador não encontrado'}), 400
+            
+        # Processa as taxas
+        taxas = processar_taxas_empresa(empresa.iloc[0], data_inicio)
+        taxa_total_cobrada = taxas['taxa_total_cobrada']
+        taxa_total_entregador = taxas['taxa_total_entregador']
+        
+        # Cria o novo registro
         nova_diaria = {
             'Data e hora de início': data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
             'Data e hora de fim': data_fim.strftime('%Y-%m-%d %H:%M:%S'),
             'Empresa': data['empresa'],
-            'Tipo Veiculo': data['veiculo'],
+            'Tipo Veiculo': empresa.iloc[0]['veiculo'],
             'Entregador': data['entregador'],
-            'CPF': entregador['cpf'],
+            'CPF': entregador.iloc[0]['cpf'],
             'Taxa total cobrada': taxa_total_cobrada,
             'Taxa total entregador': taxa_total_entregador,
             'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
-            'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N'
+            'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
+            'usuario_registro': session.get('username')
         }
         
+        # Carrega as diárias existentes
         df_diarias = carregar_diarias()
         
-        if df_diarias.empty:
-            df_diarias = pd.DataFrame([nova_diaria])
-        else:
-            df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
+        # Verifica se já existe uma diária igual
+        diaria_existente = df_diarias[
+            (df_diarias['Data e hora de início'] == nova_diaria['Data e hora de início']) &
+            (df_diarias['Data e hora de fim'] == nova_diaria['Data e hora de fim']) &
+            (df_diarias['Empresa'] == nova_diaria['Empresa']) &
+            (df_diarias['Entregador'] == nova_diaria['Entregador'])
+        ]
         
+        if not diaria_existente.empty:
+            return jsonify({'status': 'error', 'message': 'Esta diária já está registrada'}), 400
+        
+        # Adiciona a nova diária
+        df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
+        
+        # Salva as diárias
         if salvar_diarias(df_diarias):
             log_action('Diária registrada', session.get('username'), 
                       f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
