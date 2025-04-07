@@ -7,6 +7,7 @@ from logging.handlers import RotatingFileHandler
 import io
 import csv
 from functools import wraps
+import math
 
 # Configuração do sistema de logs
 def setup_logger():
@@ -922,7 +923,7 @@ def get_diarias():
         print(f"Erro ao obter diárias: {str(e)}")  # Log para debug
         return jsonify([])
 
-def processar_taxas_empresa(empresa, data_inicio):
+def processar_taxas_empresa(empresa, data_inicio, data_fim=None):
     try:
         # Converte a data de início para objeto datetime
         data = datetime.strptime(data_inicio, '%Y-%m-%d %H:%M:%S')
@@ -936,15 +937,30 @@ def processar_taxas_empresa(empresa, data_inicio):
         
         # Verifica se é fim de semana ou dia diferente
         if dia_semana in dias_diferentes:
-            taxa_total_cobrada = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
-            taxa_total_entregador = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
+            taxa_total_cobrada_base = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
+            taxa_total_entregador_base = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
         else:
-            taxa_total_cobrada = float(empresa['taxa_total_cobrada'])
-            taxa_total_entregador = float(empresa['taxa_total_entregador'])
+            taxa_total_cobrada_base = float(empresa['taxa_total_cobrada'])
+            taxa_total_entregador_base = float(empresa['taxa_total_entregador'])
+        
+        # Se for valor por hora, calcula o valor total baseado no período
+        if empresa.get('tipo_valor') == 'hora' and data_fim:
+            data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d %H:%M:%S')
+            # Calcula a diferença em horas com precisão de minutos
+            diferenca = data_fim_dt - data
+            horas_trabalhadas = diferenca.total_seconds() / 3600  # Converte para horas decimais
+            
+            # Calcula o valor total
+            taxa_total_cobrada = taxa_total_cobrada_base * horas_trabalhadas
+            taxa_total_entregador = taxa_total_entregador_base * horas_trabalhadas
+        else:
+            # Se for valor único, usa o valor base
+            taxa_total_cobrada = taxa_total_cobrada_base
+            taxa_total_entregador = taxa_total_entregador_base
             
         return {
-            'taxa_total_cobrada': taxa_total_cobrada,
-            'taxa_total_entregador': taxa_total_entregador,
+            'taxa_total_cobrada': round(taxa_total_cobrada, 2),
+            'taxa_total_entregador': round(taxa_total_entregador, 2),
             'minimo_garantido': empresa.get('minimo_garantido', 'N')
         }
     except Exception as e:
@@ -994,7 +1010,11 @@ def api_diaria():
             return jsonify({'status': 'error', 'message': 'Entregador não encontrado'}), 400
             
         # Processa as taxas
-        taxas = processar_taxas_empresa(empresa, data_inicio.strftime('%Y-%m-%d %H:%M:%S'))
+        taxas = processar_taxas_empresa(
+            empresa, 
+            data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
+            data_fim.strftime('%Y-%m-%d %H:%M:%S')
+        )
         taxa_total_cobrada = taxas['taxa_total_cobrada']
         taxa_total_entregador = taxas['taxa_total_entregador']
         
@@ -1010,7 +1030,8 @@ def api_diaria():
             'Taxa total entregador': taxa_total_entregador,
             'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
             'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
-            'usuario_registro': session.get('username')
+            'usuario_registro': session.get('username'),
+            'tipo_valor': empresa.get('tipo_valor', 'unico')  # Adiciona o tipo de valor ao registro
         }
         
         # Carrega as diárias existentes
@@ -1034,7 +1055,10 @@ def api_diaria():
         if salvar_diarias(df_diarias):
             log_action('Diária registrada', session.get('username'), 
                       f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
-                      f"Período: {data_inicio} até {data_fim}")
+                      f"Período: {data_inicio} até {data_fim}, "
+                      f"Tipo valor: {empresa.get('tipo_valor', 'unico')}, "
+                      f"Taxa cobrada: {taxa_total_cobrada}, "
+                      f"Taxa entregador: {taxa_total_entregador}")
             return jsonify({'status': 'success'})
         else:
             erro_msg = "Erro ao salvar diária no arquivo. Verifique as permissões da pasta 'data'."
