@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-permission" content="{{ permissao }}">
     <title>Gerenciamento de Escalas</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -407,6 +408,7 @@
                     </div>
                 </div>
 
+                <!-- Tabela de Diárias -->
                 <div class="table-responsive">
                     <table class="table table-striped" id="tabelaDiarias">
                         <thead>
@@ -418,9 +420,11 @@
                                 {% if permissao == 'ADM' %}
                                 <th>Tipo Veículo</th>
                                 <th>CPF</th>
-                                <th>Taxa Total Cobrada</th>
-                                <th>Taxa Total Entregador</th>
-                                <th>Mínimo Garantido</th>
+                                <th>Taxa total cobrada</th>
+                                <th>Taxa total entregador</th>
+                                <th>Taxa mínima cobrada</th>
+                                <th>Taxa mínima entregador</th>
+                                <th>Usuário</th>
                                 {% endif %}
                             </tr>
                         </thead>
@@ -621,22 +625,22 @@
                 
                         // Colunas básicas (visíveis para todos)
                         let html = `
-                            <td data-label="Data e Hora de Início">${formatarDataHora(diaria['Data e hora de início'] || '')}</td>
-                            <td data-label="Data e Hora de Fim">${formatarDataHora(diaria['Data e hora de fim'] || '')}</td>
-                            <td data-label="Empresa">${diaria['Empresa'] || ''}</td>
-                            <td data-label="Entregador">${diaria['Entregador'] || ''}</td>
-                        `;
+                            <td data-label="Data e hora de início">${formatarDataHora(diaria['Data e hora de início'])}</td>
+                            <td data-label="Data e hora de fim">${formatarDataHora(diaria['Data e hora de fim'])}</td>
+                            <td data-label="Empresa">${diaria['Empresa']}</td>
+                            <td data-label="Entregador">${diaria['Entregador']}</td>`;
 
                         // Colunas adicionais (apenas para administradores)
-                        {% if permissao == 'ADM' %}
-                        html += `
-                            <td data-label="Tipo Veículo">${diaria['Tipo Veiculo'] || ''}</td>
-                            <td data-label="CPF">${diaria['CPF'] || ''}</td>
-                            <td data-label="Taxa Total Cobrada">R$ ${typeof diaria['Taxa total cobrada'] === 'number' ? diaria['Taxa total cobrada'].toFixed(2) : '0.00'}</td>
-                            <td data-label="Taxa Total Entregador">R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
-                            <td data-label="Mínimo Garantido">${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
-                        `;
-                        {% endif %}
+                        if (document.querySelector('meta[name="user-permission"]')?.content === 'ADM') {
+                            html += `
+                                <td data-label="Tipo Veículo">${diaria['Tipo Veiculo'] || ''}</td>
+                                <td data-label="CPF">${diaria['CPF'] || ''}</td>
+                                <td data-label="Taxa total cobrada">R$ ${typeof diaria['Taxa total cobrada'] === 'number' ? diaria['Taxa total cobrada'].toFixed(2) : '0.00'}</td>
+                                <td data-label="Taxa total entregador">R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
+                                <td data-label="Taxa mínima cobrada">${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
+                                <td data-label="Taxa mínima entregador">${diaria['Taxa mínima entregador'] === 'S' ? 'Sim' : 'Não'}</td>
+                                <td data-label="Usuário">${diaria['usuario_registro'] || ''}</td>`;
+                        }
 
                         tr.innerHTML = html;
                         tbody.appendChild(tr);

@@ -978,8 +978,8 @@ def api_diaria():
             data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
             data_fim.strftime('%Y-%m-%d %H:%M:%S')
         )
-            taxa_total_cobrada = taxas['taxa_total_cobrada']
-            taxa_total_entregador = taxas['taxa_total_entregador']
+        taxa_total_cobrada = taxas['taxa_total_cobrada']
+        taxa_total_entregador = taxas['taxa_total_entregador']
         
         # Cria o novo registro
         nova_diaria = {
@@ -999,7 +999,7 @@ def api_diaria():
         print(f"Nova diária a ser adicionada: {nova_diaria}")  # Log para debug
         
         # Adiciona a nova diária
-            df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
+        df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
         
         # Salva as diárias
         if salvar_diarias(df_diarias):
@@ -1342,60 +1342,26 @@ def processar_taxas_empresa(empresa, data_inicio, data_fim=None):
         raise ValueError(f"Erro ao processar taxas: {str(e)}")
 
 @app.route('/api/diarias', methods=['GET'])
-def get_diarias():
+def api_diarias():
     try:
         df_diarias = carregar_diarias()
-        print(f"Total de diárias carregadas: {len(df_diarias)}")  # Log para debug
         
-        if df_diarias.empty:
-            print("DataFrame de diárias está vazio")  # Log para debug
-            return jsonify([])
-            
-        # Verifica permissão do usuário atual
-        usuario_atual = session.get('username')
-        permissao_atual = session.get('permissao')
-        print(f"Usuário atual: {usuario_atual}, Permissão: {permissao_atual}")  # Log para debug
+        # Converte o DataFrame para dicionário
+        diarias = df_diarias.to_dict('records')
         
-        # Se for supervisor, filtra apenas suas diárias
-        if permissao_atual == 'supervisor':
-            print(f"Filtrando diárias para o supervisor: {usuario_atual}")  # Log para debug
-            print(f"Valores únicos na coluna usuario_registro: {df_diarias['usuario_registro'].unique()}")  # Log para debug
-            df_diarias = df_diarias[df_diarias['usuario_registro'].str.strip() == usuario_atual.strip()]
-            print(f"Diárias após filtro: {len(df_diarias)}")  # Log para debug
+        # Garante que não haja NaN no JSON
+        for diaria in diarias:
+            for key, value in diaria.items():
+                if pd.isna(value):
+                    if key in ['Taxa total cobrada', 'Taxa total entregador']:
+                        diaria[key] = 0.0
+                    else:
+                        diaria[key] = ''
         
-        # Garante que todas as colunas necessárias existam
-        colunas_necessarias = [
-            'Data e hora de início',
-            'Data e hora de fim',
-            'Empresa',
-            'Tipo Veiculo',
-            'Entregador',
-            'CPF',
-            'Taxa total cobrada',
-            'Taxa total entregador',
-            'Taxa mínima cobrada',
-            'Taxa mínima entregador',
-            'usuario_registro'
-        ]
-        
-        for coluna in colunas_necessarias:
-            if coluna not in df_diarias.columns:
-                df_diarias[coluna] = ''
-        
-        # Converte os valores numéricos e substitui NaN por 0
-        df_diarias['Taxa total cobrada'] = pd.to_numeric(df_diarias['Taxa total cobrada'], errors='coerce').fillna(0)
-        df_diarias['Taxa total entregador'] = pd.to_numeric(df_diarias['Taxa total entregador'], errors='coerce').fillna(0)
-        
-        # Remove a coluna usuario_registro do resultado final
-        colunas_retorno = [col for col in colunas_necessarias if col != 'usuario_registro']
-        diarias = df_diarias[colunas_retorno].to_dict('records')
-        
-        print(f"Total de diárias retornadas: {len(diarias)}")  # Log para debug
         return jsonify(diarias)
-        
     except Exception as e:
-        print(f"Erro ao obter diárias: {str(e)}")  # Log para debug
-        return jsonify([])
+        log_error('Erro ao carregar diárias', session.get('username'), str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

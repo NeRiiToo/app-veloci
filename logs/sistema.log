@@ -250,3 +250,9 @@
 2025-04-07 14:35:34 - INFO - Ação: Usuário editado com sucesso - Usuário: admin - Detalhes: Moab
 2025-04-07 14:35:39 - INFO - Ação: Logout - Usuário: admin
 2025-04-07 14:35:43 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 15:20:24 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 15:20:31 - INFO - Ação: Tentativa de login falha - Senha incorreta - Usuário: Moab
+2025-04-07 15:20:38 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-04-07 15:27:40 - INFO - Ação: Logout - Usuário: Moab
+2025-04-07 15:27:45 - INFO - Ação: Login bem-sucedido - Usuário: Rafael
+2025-04-07 15:28:35 - INFO - Ação: Diária registrada - Usuário: Rafael - Detalhes: Empresa: Carvão, Entregador: Ailton santos almeida, Período: 2025-04-07 09:28:00 até 2025-04-07 15:28:00, Taxa cobrada: 66.0, Taxa entregador: 42.0
