@@ -1218,3 +1218,66 @@
 2025-06-08 22:32:41 - INFO - Ação: Diária registrada - Usuário: Marcos - Detalhes: Empresa: Cheiro de Pizza, Entregador: Osvaldo Ferreira de jesus , Período: 2025-06-10 18:00:00 até 2025-06-10 23:00:00, Taxa cobrada: 40.0, Taxa entregador: 30.0
 2025-06-08 22:34:14 - INFO - Ação: Relatório exportado - Usuário: Moab - Detalhes: Período: 2025-06-09 até 2025-06-15
 2025-06-08 22:42:07 - INFO - Ação: Login bem-sucedido - Usuário: Marcos
+2025-06-09 01:25:06 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Breno Ferreira Coutinho , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 01:28:30 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Taiane de Oliveira Simões , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 02:08:07 - INFO - Ação: Logout - Usuário: Moab
+2025-06-09 02:08:14 - INFO - Ação: Login bem-sucedido - Usuário: Marcos
+2025-06-09 02:57:48 - ERROR - Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:57:48 - ERROR - Erro: Erro ao registrar diária - Usuário: Marcos - Detalhes: Erro ao salvar diária: Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:57:54 - ERROR - Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:57:54 - ERROR - Erro: Erro ao registrar diária - Usuário: Marcos - Detalhes: Erro ao salvar diária: Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:58:07 - INFO - Ação: Logout - Usuário: Marcos
+2025-06-09 02:58:12 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-06-09 02:58:54 - ERROR - Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:58:54 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: Erro ao salvar diária: Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:58:59 - ERROR - Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:58:59 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: Erro ao salvar diária: Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:59:05 - ERROR - Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:59:05 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: Erro ao salvar diária: Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:59:10 - ERROR - Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 02:59:10 - ERROR - Erro: Erro ao registrar diária - Usuário: Moab - Detalhes: Erro ao salvar diária: Erro ao salvar diárias: '<' not supported between instances of 'str' and 'datetime.datetime'
+2025-06-09 03:11:55 - ERROR - Erro: Erro ao salvar diárias: cannot assemble with duplicate keys - Usuário: Sistema
+2025-06-09 03:16:05 - ERROR - Erro: Erro ao salvar diárias: cannot assemble with duplicate keys - Usuário: Sistema
+2025-06-09 03:25:11 - ERROR - Erro: Erro ao salvar diárias: cannot assemble with duplicate keys - Usuário: Sistema
+2025-06-09 03:25:24 - ERROR - Erro: Erro ao salvar diárias: cannot assemble with duplicate keys - Usuário: Sistema
+2025-06-09 03:32:54 - ERROR - Erro: Erro: Colunas duplicadas encontradas: Data e hora de início, Data e hora de fim, Empresa, Entregador - Usuário: Sistema
+2025-06-09 03:32:54 - ERROR - Erro: Erro ao salvar diárias: Erro: Colunas duplicadas encontradas: Data e hora de início, Data e hora de fim, Empresa, Entregador - Usuário: Sistema
+2025-06-09 03:38:18 - ERROR - Erro: Erro: Colunas duplicadas encontradas: Data e hora de início, Data e hora de fim, Empresa, Entregador - Usuário: Sistema
+2025-06-09 03:38:18 - ERROR - Erro: Erro ao salvar diárias: Erro: Colunas duplicadas encontradas: Data e hora de início, Data e hora de fim, Empresa, Entregador - Usuário: Sistema
+2025-06-09 03:48:46 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Breno Ferreira Coutinho , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 03:52:54 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Taiane de Oliveira Simões , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:01:26 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Igor das mercês de jesus , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:03:09 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Tiago Melo Pereira , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:03:09 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Jeremias Alves dos Santos , Período: 2025-06-09 17:00:00 até 2025-06-09 23:59:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:05:52 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Taiane de Oliveira Simões , Período: 2025-06-09 17:01:00 até 2025-06-09 23:59:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:05:52 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Tiago Melo Pereira , Período: 2025-06-09 17:01:00 até 2025-06-09 23:59:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:05:52 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - pituba, Entregador: Igor das mercês de jesus , Período: 2025-06-09 17:01:00 até 2025-06-09 23:59:00, Taxa cobrada: 13.0, Taxa entregador: 8.0
+2025-06-09 04:16:28 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Jonilton Bispo dos Santos , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:28 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Lucas da Silva de Jesus , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:28 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Alan Vieira dos Santos , Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:28 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Vanderlei Alves de Lima junior, Período: 2025-06-09 11:00:00 até 2025-06-09 17:00:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:28 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Jonilton Bispo dos Santos , Período: 2025-06-09 17:00:00 até 2025-06-09 23:59:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:29 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Lucas da Silva de Jesus , Período: 2025-06-09 17:00:00 até 2025-06-09 23:59:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:29 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Alan Vieira dos Santos , Período: 2025-06-09 17:00:00 até 2025-06-09 23:59:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:16:29 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Cantina Volpi - Itaigara, Entregador: Vanderlei Alves de Lima junior, Período: 2025-06-09 17:00:00 até 2025-06-09 23:59:00, Taxa cobrada: 16.0, Taxa entregador: 13.0
+2025-06-09 04:20:38 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: Adriano Souza Goncalves , Período: 2025-06-09 11:00:00 até 2025-06-09 16:00:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:20:38 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: Adriano Souza Goncalves , Período: 2025-06-09 16:00:00 até 2025-06-09 21:00:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:20:38 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: José Roberto Araujo dos Santos Junior , Período: 2025-06-09 18:00:00 até 2025-06-09 23:00:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:20:38 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: Fabricio Miranda, Período: 2025-06-09 18:00:00 até 2025-06-09 23:00:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:20:38 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: Thiago de Andrade Augusto , Período: 2025-06-09 18:00:00 até 2025-06-09 23:00:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:20:39 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: Jose lucas Borges de araujo , Período: 2025-06-09 18:00:00 até 2025-06-09 23:00:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:20:39 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Pizza Hut - Pituba, Entregador: Hebert oliveira pinto , Período: 2025-06-09 19:00:00 até 2025-06-10 00:30:00, Taxa cobrada: 0.0, Taxa entregador: 0.0
+2025-06-09 04:22:02 - INFO - Ação: Empresa cadastrada - Usuário: Moab - Detalhes: Nome: Teste
+2025-06-09 04:22:22 - INFO - Ação: Entregador cadastrado - Usuário: Moab - Detalhes: Nome: Moab, CPF: 99999999999
+2025-06-09 04:23:19 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Teste, Entregador: Moab, Período: 2025-06-14 19:00:00 até 2025-06-14 20:25:00, Taxa cobrada: 50.0, Taxa entregador: 30.0
+2025-06-09 04:23:50 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Teste, Entregador: Moab, Período: 2025-06-15 19:00:00 até 2025-06-15 20:25:00, Taxa cobrada: 50.0, Taxa entregador: 30.0
+2025-06-09 04:24:13 - INFO - Ação: Relatório exportado - Usuário: Moab - Detalhes: Período: 2025-06-09 até 2025-06-15
+2025-06-09 04:26:05 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Carvão, Entregador: Moab, Período: 2025-06-15 10:00:00 até 2025-06-15 13:25:00, Taxa cobrada: 11.0, Taxa entregador: 7.0
+2025-06-09 04:37:34 - INFO - Ação: Diária registrada - Usuário: Moab - Detalhes: Empresa: Carvão, Entregador: Moab, Período: 2025-06-15 10:00:00 até 2025-06-15 13:25:00, Taxa cobrada: 37.58, Taxa entregador: 23.92
+2025-06-09 04:38:30 - INFO - Ação: Logout - Usuário: Moab
+2025-06-09 04:38:38 - INFO - Ação: Login bem-sucedido - Usuário: Marcos
+2025-06-09 04:39:06 - INFO - Ação: Logout - Usuário: Marcos
+2025-06-09 04:39:39 - INFO - Ação: Login bem-sucedido - Usuário: Moab
+2025-06-09 04:39:51 - INFO - Ação: Relatório exportado - Usuário: Moab - Detalhes: Período: 2025-06-09 até 2025-06-15
+2025-06-09 04:46:06 - INFO - Ação: Empresa editada - Usuário: Moab - Detalhes: Nome: Cantina Volpi - Lauro, Alterações: nome: Cantina Volpi Lauro -> Cantina Volpi - Lauro, veiculo: Cantina Volpi Lauro -> Cantina Volpi - Lauro, taxa_total_cobrada: 50.0 -> 50, taxa_total_entregador: 50.0 -> 50, taxa_total_cobrada_fim_semana:  -> None, taxa_total_entregador_fim_semana:  -> None, dias_diferentes:  -> []
+2025-06-09 04:46:13 - INFO - Ação: Status da empresa alterado - Usuário: Moab - Detalhes: Nome: Teste, Status: ativo -> inativo

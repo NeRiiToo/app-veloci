@@ -1,6 +1,6 @@
 nome,veiculo,tipo_valor,minimo_garantido,taxa_total_cobrada,taxa_total_entregador,status,taxa_total_cobrada_fim_semana,taxa_total_entregador_fim_semana,dias_diferentes
 Cantina Volpi - Paralela,Cantina Volpi - Paralela,unico,N,16.0,13.0,ativo,16.0,15.0,
-Cantina Volpi - Lauro,Cantina Volpi - Lauro,unico,N,50.0,50.0,ativo,,,
+Cantina Volpi Lauro,Cantina Volpi Lauro,unico,N,50.0,50.0,ativo,,,
 Nonni La Pasta,Nonni La Pasta,hora,N,6.5,5.0,ativo,,,
 Cantina Volpi - Itaigara,Cantina Volpi - Itaigara,unico,N,16.0,13.0,ativo,16.0,15.0,"5,6,4"
 Pizza Hut - Pituba,Pizza Hut Pituba,unico,N,0.0,0.0,ativo,,,
@@ -13,4 +13,4 @@ Pizza Hut Ondina,Pizza Hut Ondina,unico,N,0.0,0.0,ativo,,,
 Cantina Volpi - pituba,Cantina Volpi - Pituba,unico,N,13.0,8.0,ativo,13.0,10.0,"5,6,4"
 Cantina Volpi - ondina,Cantina Volpi - Ondina,unico,N,13.0,8.0,ativo,13.0,10.0,"5,6,4"
 Mana - Barra,Mana - Barra,unico,N,65.0,45.0,ativo,,,
-Teste,Teste,hora,S,20.0,10.0,inativo,50.0,30.0,6
+Teste,Teste,hora,S,20.0,10.0,ativo,50.0,30.0,6

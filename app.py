@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -10,6 +10,7 @@ from functools import wraps
 import math
 import shutil
 import hashlib
+from filelock import FileLock, Timeout
 
 # Configuração do sistema de logs
 def setup_logger():
@@ -428,13 +429,68 @@ def salvar_entregadores(df):
     """Salva os entregadores com backup e verificação"""
     return salvar_dados(ENTREGADORES_FILE, df)
 
-def salvar_diarias(df):
-    """Salva as diárias com backup e verificação"""
-    return salvar_dados(DIARIAS_FILE, df)
+def salvar_diarias_com_lock(df, caminho=DIARIAS_FILE):
+    """Salva as diárias com lock para evitar conflitos de concorrência"""
+    try:
+        # Garante que a pasta data existe
+        os.makedirs(os.path.dirname(caminho), exist_ok=True)
+        
+        # Renomeia as colunas para o formato esperado
+        mapeamento_colunas = {
+            'data_inicio': 'Data e hora de início',
+            'data_fim': 'Data e hora de fim',
+            'empresa': 'Empresa',
+            'entregador': 'Entregador'
+        }
+        
+        # Renomeia as colunas usando errors='ignore' para evitar erros com colunas inexistentes
+        df.rename(columns=mapeamento_colunas, inplace=True, errors='ignore')
+        
+        # Verifica se existem colunas duplicadas
+        colunas_duplicadas = df.columns[df.columns.duplicated()].unique()
+        if len(colunas_duplicadas) > 0:
+            erro_msg = f"Erro: Colunas duplicadas encontradas: {', '.join(colunas_duplicadas)}"
+            log_error(erro_msg, "Sistema")
+            raise ValueError(erro_msg)
+        
+        # Converte as colunas de data para datetime antes de ordenar
+        if not df.empty:
+            df['Data e hora de início'] = pd.to_datetime(df['Data e hora de início'], errors='coerce')
+            df['Data e hora de fim'] = pd.to_datetime(df['Data e hora de fim'], errors='coerce')
+            
+            # Ordena o DataFrame por data_inicio
+            df = df.sort_values('Data e hora de início')
+            
+            # Converte as datas para string no formato correto antes de salvar
+            df['Data e hora de início'] = df['Data e hora de início'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df['Data e hora de fim'] = df['Data e hora de fim'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Cria um lock file
+        lock = FileLock(f"{caminho}.lock")
+        
+        try:
+            with lock.acquire(timeout=10):  # Espera até 10 segundos pelo lock
+                # Cria backup antes de salvar
+                if os.path.exists(caminho):
+                    criar_backup(caminho)
+                
+                # Salva o arquivo
+                df.to_excel(caminho, index=False)
+                return True
+                
+        except Timeout:
+            log_error("Timeout ao tentar obter lock para salvar diárias", "Sistema")
+            return False
+            
+    except Exception as e:
+        log_error(f"Erro ao salvar diárias: {str(e)}", "Sistema")
+        return False
 
-def salvar_usuarios(df):
-    """Salva os usuários com backup e verificação"""
-    return salvar_dados(USUARIOS_FILE, df)
+def salvar_diarias(df):
+    """
+    Função legada mantida para compatibilidade, agora usa o novo sistema com lock
+    """
+    return salvar_diarias_com_lock(df)
 
 def carregar_escala():
     if os.path.exists(ESCALA_FILE):
@@ -471,9 +527,12 @@ def carregar_diarias():
                 if coluna not in df_diarias.columns:
                     df_diarias[coluna] = ''
             
-            # Converte as colunas de data para string
-            df_diarias['Data e hora de início'] = df_diarias['Data e hora de início'].astype(str)
-            df_diarias['Data e hora de fim'] = df_diarias['Data e hora de fim'].astype(str)
+            # Converte as colunas de data para datetime e depois para string no formato correto
+            if not df_diarias.empty:
+                for coluna in ['Data e hora de início', 'Data e hora de fim']:
+                    if not pd.api.types.is_datetime64_any_dtype(df_diarias[coluna]):
+                        df_diarias[coluna] = pd.to_datetime(df_diarias[coluna], errors='coerce')
+                    df_diarias[coluna] = df_diarias[coluna].dt.strftime('%Y-%m-%d %H:%M:%S')
             
             # Remove duplicatas
             df_diarias = df_diarias.drop_duplicates(
@@ -483,94 +542,19 @@ def carregar_diarias():
             # Ordena por data de início
             df_diarias = df_diarias.sort_values('Data e hora de início')
             
-            # Carrega as empresas e entregadores
-            df_empresas = carregar_empresas()
-            df_entregadores = carregar_entregadores()
-            
-            # Verifica se há diárias nos logs que não estão no arquivo
-            with open('logs/sistema.log', 'r', encoding='utf-8') as f:
-                logs = f.readlines()
-            
-            diarias_logs = []
-            for log in logs:
-                if 'Diária registrada' in log:
-                    try:
-                        # Extrai as informações do log
-                        data = log.split(' - ')[0]
-                        usuario = log.split('Usuário: ')[1].split(' - ')[0]
-                        empresa = log.split('Empresa: ')[1].split(',')[0]
-                        entregador = log.split('Entregador: ')[1].split(',')[0]
-                        periodo = log.split('Período: ')[1].strip()
-                        data_inicio, data_fim = periodo.split(' até ')
-                        
-                        # Verifica se a diária já existe no arquivo
-                        diaria_existe = False
-                        for _, row in df_diarias.iterrows():
-                            if (row['Data e hora de início'] == data_inicio and 
-                                row['Data e hora de fim'] == data_fim and 
-                                row['Empresa'] == empresa and 
-                                row['Entregador'] == entregador):
-                                diaria_existe = True
-                                break
-                        
-                        if not diaria_existe:
-                            # Busca informações da empresa
-                            empresa_info = df_empresas[df_empresas['nome'] == empresa].iloc[0]
-                            
-                            # Calcula as taxas
-                            taxa_total_cobrada = empresa_info['taxa_total_cobrada']
-                            taxa_total_entregador = empresa_info['taxa_total_entregador']
-                            
-                            # Adiciona a diária à lista
-                            diarias_logs.append({
-                                'Data e hora de início': data_inicio,
-                                'Data e hora de fim': data_fim,
-                                'Empresa': empresa,
-                                'Tipo Veiculo': 'Moto',
-                                'Entregador': entregador,
-                                'Taxa total cobrada': taxa_total_cobrada,
-                                'Taxa total entregador': taxa_total_entregador,
-                                'usuario_registro': ₢
-                            })
-                    except Exception as e:
-                        print(f"Erro ao processar log: {str(e)}")
-            
-            # Se encontrou diárias nos logs que não estão no arquivo
-            if diarias_logs:
-                # Converte a lista de diárias em DataFrame
-                df_diarias_logs = pd.DataFrame(diarias_logs)
-                
-                # Concatena com as diárias existentes
-                df_diarias = pd.concat([df_diarias, df_diarias_logs], ignore_index=True)
-                
-                # Remove duplicatas novamente
-                df_diarias = df_diarias.drop_duplicates(
-                    subset=['Data e hora de início', 'Data e hora de fim', 'Empresa', 'Entregador']
-                )
-                
-                # Ordena por data de início
-                df_diarias = df_diarias.sort_values('Data e hora de início')
-                
-                # Salva o arquivo atualizado
-                salvar_diarias(df_diarias)
-                
-                print(f"Recuperadas {len(diarias_logs)} diárias dos logs")
+            # Garante que as taxas sejam números
+            df_diarias['Taxa total cobrada'] = pd.to_numeric(df_diarias['Taxa total cobrada'], errors='coerce').fillna(0)
+            df_diarias['Taxa total entregador'] = pd.to_numeric(df_diarias['Taxa total entregador'], errors='coerce').fillna(0)
             
             return df_diarias
         else:
-            # Se o arquivo não existe, cria um DataFrame vazio
-            return pd.DataFrame(columns=[
-                'Data e hora de início', 'Data e hora de fim', 'Empresa', 
-                'Tipo Veiculo', 'Entregador', 'Taxa total cobrada', 
-                'Taxa total entregador', 'usuario_registro'
-            ])
+            # Retorna DataFrame vazio com as colunas necessárias
+            return pd.DataFrame(columns=colunas_necessarias)
+            
     except Exception as e:
-        print(f"Erro ao carregar diárias: {str(e)}")
-        return pd.DataFrame(columns=[
-            'Data e hora de início', 'Data e hora de fim', 'Empresa', 
-            'Tipo Veiculo', 'Entregador', 'Taxa total cobrada', 
-            'Taxa total entregador', 'usuario_registro'
-        ])
+        app.logger.error(f"Erro ao carregar diárias: {str(e)}")
+        # Em caso de erro, retorna DataFrame vazio
+        return pd.DataFrame(columns=colunas_necessarias)
 
 @app.route('/')
 @login_required
@@ -904,121 +888,130 @@ def exportar_excel():
 def api_diaria():
     try:
         data = request.get_json()
-        print(f"Dados recebidos: {data}")  # Log para debug
         
-        # Validação dos dados
-        if not all(k in data for k in ['data_inicio', 'data_fim', 'empresa', 'entregador']):
-            return jsonify({'status': 'error', 'message': 'Dados incompletos'}), 400
-            
-        # Converte as datas para datetime
+        # Converte as strings de data para objetos datetime
         try:
             data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%dT%H:%M')
             data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%dT%H:%M')
         except ValueError as e:
-            print(f"Erro ao converter datas: {str(e)}")  # Log para debug
-            return jsonify({'status': 'error', 'message': 'Formato de data inválido'}), 400
-            
-        # Valida se a data de fim é maior que a data de início
+            return jsonify({'error': 'Formato de data inválido. Use o formato YYYY-MM-DDTHH:MM'}), 400
+        
+        # Validações
         if data_fim <= data_inicio:
-            return jsonify({'status': 'error', 'message': 'A data de fim deve ser maior que a data de início'}), 400
+            return jsonify({'error': 'A data de fim deve ser maior que a data de início'}), 400
             
-        # Valida se o período é maior que 8 horas
-        if (data_fim - data_inicio).total_seconds() > 28800:  # 8 horas em segundos
-            return jsonify({'status': 'error', 'message': 'O período não pode ser maior que 8 horas'}), 400
+        # Calcula a diferença em horas
+        diff_hours = (data_fim - data_inicio).total_seconds() / 3600
+        
+        if diff_hours > 8:
+            return jsonify({'error': 'O período não pode ser maior que 8 horas'}), 400
             
-        # Valida período mínimo (30 minutos)
-        if (data_fim - data_inicio).total_seconds() < 1800:  # 30 minutos em segundos
-            return jsonify({'status': 'error', 'message': 'O período mínimo é de 30 minutos'}), 400
+        if diff_hours < 0.5:
+            return jsonify({'error': 'O período mínimo é de 30 minutos'}), 400
+
+        # Carrega os dados necessários
+        df_empresas = pd.DataFrame(carregar_empresas())
+        df_entregadores = pd.DataFrame(carregar_entregadores())
         
-        # Carrega as empresas e entregadores
-        empresas = carregar_empresas()
-        entregadores = carregar_entregadores()
-        
-        print(f"Total de empresas: {len(empresas)}")  # Log para debug
-        print(f"Total de entregadores: {len(entregadores)}")  # Log para debug
-        
-        # Valida empresa
-        empresa = next((emp for emp in empresas if emp['nome'] == data['empresa']), None)
-        if not empresa:
-            return jsonify({'status': 'error', 'message': 'Empresa não encontrada'}), 400
+        # Verifica se a empresa existe e está ativa
+        empresa_info = df_empresas[df_empresas['nome'] == data['empresa']]
+        if empresa_info.empty:
+            return jsonify({'error': 'Empresa não encontrada'}), 400
             
-        # Valida entregador
-        entregador = next((ent for ent in entregadores if ent['nome'] == data['entregador']), None)
-        if not entregador:
-            return jsonify({'status': 'error', 'message': 'Entregador não encontrado'}), 400
+        empresa_info = empresa_info.iloc[0].to_dict()
+        if empresa_info.get('status') != 'ativo':
+            return jsonify({'error': 'Empresa está inativa'}), 400
             
-        # Verifica sobreposição de horários
-        df_diarias = carregar_diarias()
-        print(f"Total de diárias existentes: {len(df_diarias)}")  # Log para debug
+        # Verifica se o entregador existe e está ativo
+        entregador_info = df_entregadores[df_entregadores['nome'] == data['entregador']]
+        if entregador_info.empty:
+            return jsonify({'error': 'Entregador não encontrado'}), 400
+            
+        entregador_info = entregador_info.iloc[0].to_dict()
+        if entregador_info.get('status') != 'ativo':
+            return jsonify({'error': 'Entregador está inativo'}), 400
+
+        # Lê o arquivo de diárias existente
+        df = pd.DataFrame()
+        if os.path.exists(DIARIAS_FILE):
+            try:
+                df = pd.read_excel(DIARIAS_FILE)
+                if not df.empty:
+                    # Converte as colunas de data para datetime
+                    df['Data e hora de início'] = pd.to_datetime(df['Data e hora de início'])
+                    df['Data e hora de fim'] = pd.to_datetime(df['Data e hora de fim'])
+                    
+                    # Verifica se já existe uma diária para o mesmo entregador no mesmo período
+                    conflito = df[
+                        (df['Entregador'] == data['entregador']) & (
+                            (df['Data e hora de início'] < data_fim) &
+                            (df['Data e hora de fim'] > data_inicio)
+                        )
+                    ]
+                    
+                    if not conflito.empty:
+                        return jsonify({'error': f'Já existe uma diária registrada para {data["entregador"]} neste período'}), 400
+            except Exception as e:
+                app.logger.error(f"Erro ao ler arquivo de diárias: {str(e)}")
+                return jsonify({'error': 'Erro ao ler arquivo de diárias'}), 500
         
-        sobreposicao = df_diarias[
-            (df_diarias['Entregador'] == data['entregador']) &
-            (
-                ((df_diarias['Data e hora de início'] <= data_inicio.strftime('%Y-%m-%d %H:%M:%S')) & (df_diarias['Data e hora de fim'] > data_inicio.strftime('%Y-%m-%d %H:%M:%S'))) |
-                ((df_diarias['Data e hora de início'] < data_fim.strftime('%Y-%m-%d %H:%M:%S')) & (df_diarias['Data e hora de fim'] >= data_fim.strftime('%Y-%m-%d %H:%M:%S'))) |
-                ((df_diarias['Data e hora de início'] >= data_inicio.strftime('%Y-%m-%d %H:%M:%S')) & (df_diarias['Data e hora de fim'] <= data_fim.strftime('%Y-%m-%d %H:%M:%S')))
-            )
+        # Processa as taxas da empresa
+        taxas = processar_taxas_empresa(data['empresa'], data_inicio, data_fim)
+        
+        # Define as colunas na ordem correta para evitar duplicatas
+        colunas = [
+            'Data e hora de início',
+            'Data e hora de fim',
+            'Empresa',
+            'Entregador',
+            'CPF',
+            'Tipo Veiculo',
+            'Taxa total cobrada',
+            'Taxa total entregador',
+            'Taxa mínima cobrada',
+            'Taxa mínima entregador',
+            'usuario_registro'
         ]
         
-        if not sobreposicao.empty:
-            return jsonify({'status': 'error', 'message': 'Já existe uma diária registrada para este entregador no período informado'}), 400
-            
-        # Verifica limite de diárias por dia
-        diarias_dia = df_diarias[
-            (df_diarias['Entregador'] == data['entregador']) &
-            (df_diarias['Data e hora de início'].str[:10] == data_inicio.strftime('%Y-%m-%d'))
-        ]
-        
-        if len(diarias_dia) >= 3:  # Limite de 3 diárias por dia
-            return jsonify({'status': 'error', 'message': 'Limite de diárias diárias atingido para este entregador'}), 400
-            
-        # Processa as taxas
-        taxas = processar_taxas_empresa(
-            empresa, 
-            data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
-            data_fim.strftime('%Y-%m-%d %H:%M:%S')
-        )
-        taxa_total_cobrada = taxas['taxa_total_cobrada']
-        taxa_total_entregador = taxas['taxa_total_entregador']
-        
-        # Cria o novo registro
-        nova_diaria = {
-            'Data e hora de início': data_inicio.strftime('%Y-%m-%d %H:%M:%S'),
-            'Data e hora de fim': data_fim.strftime('%Y-%m-%d %H:%M:%S'),
+        # Cria o dicionário com os dados
+        nova_diaria_dict = {
+            'Data e hora de início': data_inicio,
+            'Data e hora de fim': data_fim,
             'Empresa': data['empresa'],
-            'Tipo Veiculo': empresa['veiculo'],
             'Entregador': data['entregador'],
-            'CPF': entregador['cpf'],
-            'Taxa total cobrada': taxa_total_cobrada,
-            'Taxa total entregador': taxa_total_entregador,
-            'Taxa mínima cobrada': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
-            'Taxa mínima entregador': 'S' if taxas['minimo_garantido'] == 'S' else 'N',
-            'usuario_registro': session.get('username')
+            'CPF': entregador_info.get('cpf', ''),
+            'Tipo Veiculo': empresa_info.get('veiculo', 'Moto'),
+            'Taxa total cobrada': float(taxas['taxa_cobrada']),
+            'Taxa total entregador': float(taxas['taxa_entregador']),
+            'Taxa mínima cobrada': empresa_info.get('minimo_garantido', 'N') or 'N',
+            'Taxa mínima entregador': empresa_info.get('minimo_garantido', 'N') or 'N',
+            'usuario_registro': session.get('username', 'Sistema')
         }
         
-        print(f"Nova diária a ser adicionada: {nova_diaria}")  # Log para debug
+        # Cria nova linha com os dados da diária, garantindo a ordem das colunas
+        nova_diaria = pd.DataFrame([nova_diaria_dict], columns=colunas)
         
-        # Adiciona a nova diária
-        df_diarias = pd.concat([df_diarias, pd.DataFrame([nova_diaria])], ignore_index=True)
+        # Se o DataFrame existente estiver vazio, usa as mesmas colunas do novo
+        if df.empty:
+            df = pd.DataFrame(columns=colunas)
         
-        # Salva as diárias
-        if salvar_diarias(df_diarias):
-            log_action('Diária registrada', session.get('username'), 
-                      f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, "
-                      f"Período: {data_inicio} até {data_fim}, "
-                      f"Taxa cobrada: {taxa_total_cobrada}, "
-                      f"Taxa entregador: {taxa_total_entregador}")
-            return jsonify({'status': 'success'})
+        # Adiciona a nova diária ao DataFrame
+        df = pd.concat([df, nova_diaria], ignore_index=True)
+        
+        # Salva o arquivo com lock
+        if salvar_diarias_com_lock(df):
+            # Registra no log
+            log_action('Diária registrada', session.get('username', 'Sistema'),
+                      f"Empresa: {data['empresa']}, Entregador: {data['entregador']}, " +
+                      f"Período: {data_inicio.strftime('%Y-%m-%d %H:%M:%S')} até {data_fim.strftime('%Y-%m-%d %H:%M:%S')}, " +
+                      f"Taxa cobrada: {taxas['taxa_cobrada']}, Taxa entregador: {taxas['taxa_entregador']}")
+            return jsonify({'success': True})
         else:
-            erro_msg = "Erro ao salvar diária no arquivo. Verifique as permissões da pasta 'data'."
-            log_error('Erro ao registrar diária', session.get('username'), erro_msg)
-            return jsonify({'status': 'error', 'message': erro_msg}), 500
-            
+            return jsonify({'error': 'Erro ao salvar diária'}), 500
+        
     except Exception as e:
-        erro_msg = str(e)
-        print(f"Erro ao registrar diária: {erro_msg}")  # Log para debug
-        log_error('Erro ao registrar diária', session.get('username'), erro_msg)
-        return jsonify({'status': 'error', 'message': erro_msg}), 500
+        app.logger.error(f"Erro ao salvar diária: {str(e)}")
+        return jsonify({'error': f'Erro ao salvar diária: {str(e)}'}), 500
 
 @app.route('/api/empresa', methods=['POST'])
 def api_empresa():
@@ -1285,61 +1278,93 @@ def criar_backup(arquivo):
         return False
 
 def processar_taxas_empresa(empresa, data_inicio, data_fim=None):
+    """
+    Processa as taxas de uma empresa para uma diária, considerando:
+    - Taxas diferentes para dias da semana e fim de semana
+    - Dias específicos com taxas diferentes
+    - Mínimo garantido
+    """
     try:
-        # Converte a data de início para objeto datetime
-        data = datetime.strptime(data_inicio, '%Y-%m-%d %H:%M:%S')
-        dia_semana = data.weekday()  # 0 = segunda, 6 = domingo
-        
-        # Verifica se o dia da semana está na lista de dias diferentes
-        dias_diferentes = empresa.get('dias_diferentes', '')
-        if isinstance(dias_diferentes, str):
-            # Se for string, converte para lista de números
-            dias_diferentes = [int(d) for d in dias_diferentes.split(',') if d.strip().isdigit()]
-        
-        # Verifica se é fim de semana ou dia diferente
-        if dia_semana in dias_diferentes:
-            taxa_total_cobrada_base = float(empresa.get('taxa_total_cobrada_fim_semana', empresa['taxa_total_cobrada']))
-            taxa_total_entregador_base = float(empresa.get('taxa_total_entregador_fim_semana', empresa['taxa_total_entregador']))
-        else:
-            taxa_total_cobrada_base = float(empresa['taxa_total_cobrada'])
-            taxa_total_entregador_base = float(empresa['taxa_total_entregador'])
-        
-        # Se for valor por hora, calcula o valor total baseado no período
-        if empresa.get('tipo_valor') == 'hora' and data_fim:
-            try:
-                data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d %H:%M:%S')
-                # Calcula a diferença em horas com precisão de minutos
-                diferenca = data_fim_dt - data
-                horas_trabalhadas = diferenca.total_seconds() / 3600  # Converte para horas decimais
-                
-                # Garante que o valor não seja negativo
-                if horas_trabalhadas < 0:
-                    raise ValueError("O período não pode ser negativo")
-                
-                # Calcula o valor total
-                taxa_total_cobrada = taxa_total_cobrada_base * horas_trabalhadas
-                taxa_total_entregador = taxa_total_entregador_base * horas_trabalhadas
-            except ValueError as e:
-                raise ValueError(f"Erro ao calcular período: {str(e)}")
-        else:
-            # Se for valor único, usa o valor base
-            taxa_total_cobrada = taxa_total_cobrada_base
-            taxa_total_entregador = taxa_total_entregador_base
+        # Se data_fim não foi fornecida, usa data_inicio
+        if data_fim is None:
+            data_fim = data_inicio
             
-        # Garante que os valores não sejam negativos
-        taxa_total_cobrada = max(0, taxa_total_cobrada)
-        taxa_total_entregador = max(0, taxa_total_entregador)
+        # Carrega as informações da empresa
+        df_empresas = pd.DataFrame(carregar_empresas())
+        empresa_info = df_empresas[df_empresas['nome'] == empresa]
+        
+        if empresa_info.empty:
+            raise ValueError(f"Empresa {empresa} não encontrada")
+            
+        empresa_info = empresa_info.iloc[0].to_dict()
+        
+        # Obtém o dia da semana (0 = Segunda, 6 = Domingo)
+        dia_semana = data_inicio.weekday()
+        
+        # Verifica se é fim de semana (5 = Sábado, 6 = Domingo)
+        is_fim_semana = dia_semana >= 5
+        
+        # Verifica se o dia está na lista de dias diferentes
+        dias_diferentes = []
+        if empresa_info.get('dias_diferentes'):
+            try:
+                dias_diferentes = [int(d) for d in str(empresa_info['dias_diferentes']).split(',') if d.strip()]
+            except (ValueError, AttributeError):
+                dias_diferentes = []
+        
+        # Função auxiliar para converter valor para float
+        def converter_para_float(valor, padrao=0.0):
+            if pd.isna(valor) or valor in ['', None, 'N', 'n', 'Não', 'nao']:
+                return padrao
+            try:
+                if isinstance(valor, str):
+                    # Remove caracteres não numéricos exceto ponto e vírgula
+                    valor = ''.join(c for c in valor if c.isdigit() or c in '.,')
+                    # Substitui vírgula por ponto
+                    valor = valor.replace(',', '.')
+                return float(valor)
+            except (ValueError, TypeError):
+                return padrao
+        
+        # Determina as taxas a serem usadas
+        if dia_semana in dias_diferentes:
+            # Usa taxas de fim de semana para dias diferentes
+            taxa_cobrada = converter_para_float(empresa_info.get('taxa_total_cobrada_fim_semana'), 
+                                             converter_para_float(empresa_info.get('taxa_total_cobrada')))
+            taxa_entregador = converter_para_float(empresa_info.get('taxa_total_entregador_fim_semana'),
+                                                converter_para_float(empresa_info.get('taxa_total_entregador')))
+        elif is_fim_semana and empresa_info.get('taxa_total_cobrada_fim_semana'):
+            # Usa taxas de fim de semana
+            taxa_cobrada = converter_para_float(empresa_info['taxa_total_cobrada_fim_semana'])
+            taxa_entregador = converter_para_float(empresa_info['taxa_total_entregador_fim_semana'])
+        else:
+            # Usa taxas normais
+            taxa_cobrada = converter_para_float(empresa_info['taxa_total_cobrada'])
+            taxa_entregador = converter_para_float(empresa_info['taxa_total_entregador'])
+        
+        tipo_valor = str(empresa_info.get('tipo_valor', '')).strip().lower()
+        if tipo_valor == 'hora':
+            horas = (data_fim - data_inicio).total_seconds() / 3600
+            taxa_cobrada = round(taxa_cobrada * horas, 2)
+            taxa_entregador = round(taxa_entregador * horas, 2)
+        
+        # Verifica o mínimo garantido
+        minimo_garantido = converter_para_float(empresa_info.get('minimo_garantido'))
+        if minimo_garantido > 0 and taxa_entregador < minimo_garantido:
+            taxa_entregador = minimo_garantido
             
         return {
-            'taxa_total_cobrada': round(taxa_total_cobrada, 2),
-            'taxa_total_entregador': round(taxa_total_entregador, 2),
-            'minimo_garantido': empresa.get('minimo_garantido', 'N'),
-            'tipo_valor': empresa.get('tipo_valor', 'unico'),
-            'horas_trabalhadas': round(horas_trabalhadas, 2) if empresa.get('tipo_valor') == 'hora' and data_fim else None
+            'taxa_cobrada': taxa_cobrada,
+            'taxa_entregador': taxa_entregador
         }
+        
     except Exception as e:
-        print(f"Erro ao processar taxas da empresa: {str(e)}")
-        raise ValueError(f"Erro ao processar taxas: {str(e)}")
+        app.logger.error(f"Erro ao processar taxas da empresa {empresa}: {str(e)}")
+        # Retorna valores padrão em caso de erro
+        return {
+            'taxa_cobrada': 0.0,
+            'taxa_entregador': 0.0
+        }
 
 @app.route('/api/diarias', methods=['GET'])
 def api_diarias():
@@ -1362,6 +1387,125 @@ def api_diarias():
     except Exception as e:
         log_error('Erro ao carregar diárias', session.get('username'), str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/diaria/editar', methods=['POST'])
+def editar_diaria():
+    try:
+        dados = request.get_json()
+        diaria_antiga = dados['diaria_antiga']
+        diaria_nova = dados['diaria_nova']
+        
+        # Adquire o lock para editar o arquivo
+        with FileLock("diarias.xlsx.lock"):
+            # Carrega o arquivo Excel
+            df = pd.read_excel('diarias.xlsx')
+            
+            # Encontra a linha correspondente à diária antiga
+            linha = df[
+                (df['Data e hora de início'] == diaria_antiga['data_inicio']) &
+                (df['Data e hora de fim'] == diaria_antiga['data_fim']) &
+                (df['Empresa'] == diaria_antiga['empresa']) &
+                (df['Entregador'] == diaria_antiga['entregador'])
+            ].index
+            
+            if len(linha) == 0:
+                return jsonify({'status': 'error', 'message': 'Diária não encontrada'})
+            
+            # Verifica sobreposição com outras diárias
+            data_inicio = pd.to_datetime(diaria_nova['data_inicio'])
+            data_fim = pd.to_datetime(diaria_nova['data_fim'])
+            entregador = diaria_nova['entregador']
+            
+            # Filtra diárias do mesmo entregador, excluindo a que está sendo editada
+            outras_diarias = df[
+                (df['Entregador'] == entregador) &
+                (df.index != linha[0])
+            ]
+            
+            for _, diaria in outras_diarias.iterrows():
+                d_inicio = pd.to_datetime(diaria['Data e hora de início'])
+                d_fim = pd.to_datetime(diaria['Data e hora de fim'])
+                
+                if (
+                    (data_inicio >= d_inicio and data_inicio < d_fim) or
+                    (data_fim > d_inicio and data_fim <= d_fim) or
+                    (data_inicio <= d_inicio and data_fim >= d_fim)
+                ):
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Já existe uma diária para este entregador neste período'
+                    })
+            
+            # Atualiza os dados da diária
+            df.loc[linha, 'Data e hora de início'] = diaria_nova['data_inicio']
+            df.loc[linha, 'Data e hora de fim'] = diaria_nova['data_fim']
+            df.loc[linha, 'Empresa'] = diaria_nova['empresa']
+            df.loc[linha, 'Entregador'] = diaria_nova['entregador']
+            
+            # Salva o arquivo
+            df.to_excel('diarias.xlsx', index=False)
+            
+            # Registra a edição no log
+            with open('sistema.log', 'a', encoding='utf-8') as log:
+                log.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Diária editada por {session['username']}\n")
+                log.write("Dados antigos:\n")
+                log.write(f"  Empresa: {diaria_antiga['empresa']}\n")
+                log.write(f"  Entregador: {diaria_antiga['entregador']}\n")
+                log.write(f"  Início: {diaria_antiga['data_inicio']}\n")
+                log.write(f"  Fim: {diaria_antiga['data_fim']}\n")
+                log.write("Dados novos:\n")
+                log.write(f"  Empresa: {diaria_nova['empresa']}\n")
+                log.write(f"  Entregador: {diaria_nova['entregador']}\n")
+                log.write(f"  Início: {diaria_nova['data_inicio']}\n")
+                log.write(f"  Fim: {diaria_nova['data_fim']}\n")
+            
+            return jsonify({'status': 'success'})
+            
+    except Exception as e:
+        print(f"Erro ao editar diária: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/diaria/remover', methods=['POST'])
+def remover_diaria():
+    try:
+        diaria = request.get_json()
+        
+        # Adquire o lock para editar o arquivo
+        with FileLock("diarias.xlsx.lock"):
+            # Carrega o arquivo Excel
+            df = pd.read_excel('diarias.xlsx')
+            
+            # Encontra a linha correspondente à diária
+            linha = df[
+                (df['Data e hora de início'] == diaria['data_inicio']) &
+                (df['Data e hora de fim'] == diaria['data_fim']) &
+                (df['Empresa'] == diaria['empresa']) &
+                (df['Entregador'] == diaria['entregador'])
+            ].index
+            
+            if len(linha) == 0:
+                return jsonify({'status': 'error', 'message': 'Diária não encontrada'})
+            
+            # Remove a linha
+            df = df.drop(linha)
+            
+            # Salva o arquivo
+            df.to_excel('diarias.xlsx', index=False)
+            
+            # Registra a remoção no log
+            with open('sistema.log', 'a', encoding='utf-8') as log:
+                log.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ")
+                log.write(f"Diária removida por {session['username']} – ")
+                log.write(f"Empresa: {diaria['empresa']}, ")
+                log.write(f"Entregador: {diaria['entregador']}, ")
+                log.write(f"Início: {diaria['data_inicio']}, ")
+                log.write(f"Fim: {diaria['data_fim']}\n")
+            
+            return jsonify({'status': 'success'})
+            
+    except Exception as e:
+        print(f"Erro ao remover diária: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -12,9 +12,142 @@
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <style>
+        /* Sistema de alertas flutuantes */
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            z-index: 9999;
+            pointer-events: none; /* Permite clicar através do container */
+        }
+
+        .alert {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            padding: 15px 20px;
+            position: relative;
+            pointer-events: auto; /* Permite interação com o alerta */
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .alert-danger {
+            border-left-color: #dc3545;
+        }
+
+        .alert-success {
+            border-left-color: #28a745;
+        }
+
+        .alert-warning {
+            border-left-color: #ffc107;
+        }
+
+        .alert-info {
+            border-left-color: #17a2b8;
+        }
+
+        .alert .close {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            padding: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            opacity: 0.7;
+        }
+
+        .alert .close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .alert.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Toast customizado */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            min-width: 300px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast-success {
+            border-left: 4px solid #28a745;
+        }
+
+        .toast-error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .toast-warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        .toast-info {
+            border-left: 4px solid #17a2b8;
+        }
+
+        .toast-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 0.75rem 1rem;
+        }
+
+        .toast-body {
+            padding: 0.75rem 1rem;
+            color: #333;
+        }
+
         /* Estilos gerais */
         body {
             background-color: #f8f9fa;
@@ -243,6 +376,9 @@
     </style>
 </head>
 <body>
+    <!-- Container para alertas flutuantes -->
+    <div class="alert-container"></div>
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
         <div class="container">
             <a class="navbar-brand" href="/">Gerenciamento de Escalas - Veloci</a>
@@ -280,6 +416,18 @@
     </nav>
 
     <div class="container">
+        <!-- Área de mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -292,13 +440,13 @@
                                 <div class="col-md-3">
                                     <div class="mb-3">
                                         <label class="form-label">Data e Hora de Início</label>
-                                        <input type="datetime-local" class="form-control" name="data_inicio" id="data_inicio" required onchange="atualizarLimitesDataFim()">
+                                        <input type="datetime-local" class="form-control" name="data_inicio" id="data_inicio" required onchange="atualizarLimitesDataFim()" value="{{ session.get('form_data', {}).get('data_inicio', '') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="mb-3">
                                         <label class="form-label">Data e Hora de Fim</label>
-                                        <input type="datetime-local" class="form-control" name="data_fim" id="data_fim" required>
+                                        <input type="datetime-local" class="form-control" name="data_fim" id="data_fim" required value="{{ session.get('form_data', {}).get('data_fim', '') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -425,6 +573,7 @@
                                 <th>Taxa mínima cobrada</th>
                                 <th>Taxa mínima entregador</th>
                                 <th>Usuário</th>
+                                <th>Ações</th>
                                 {% endif %}
                             </tr>
                         </thead>
@@ -477,12 +626,264 @@
         </div>
     </div>
 
+    <!-- Modal Editar Diária -->
+    <div class="modal fade" id="editarDiariaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Diária</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editarDiariaForm">
+                        <input type="hidden" id="diaria_id" name="diaria_id">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Data e Hora de Início</label>
+                                    <input type="datetime-local" class="form-control" name="data_inicio" id="edit_data_inicio" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Data e Hora de Fim</label>
+                                    <input type="datetime-local" class="form-control" name="data_fim" id="edit_data_fim" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Empresa</label>
+                                    <select class="form-select" name="empresa" id="edit_empresa" required>
+                                        <option value="">Selecione uma empresa</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Entregador</label>
+                                    <select class="form-select select2-search" name="entregador" id="edit_entregador" required>
+                                        <option value="">Selecione um entregador</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarEdicaoDiaria()">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Remover Diária -->
+    <div class="modal fade" id="removerDiariaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Remover Diária</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja remover esta diária?</p>
+                    <div id="removerDiariaDetalhes" class="alert alert-info">
+                        <!-- Detalhes da diária serão inseridos aqui -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarRemocaoDiaria()">Remover</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
+        // Função para criar e mostrar alertas flutuantes
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.querySelector('.alert-container');
+            
+            // Cria o elemento de alerta
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="close" onclick="closeAlert(this.parentElement)">&times;</button>
+            `;
+            
+            // Adiciona o alerta ao container
+            alertContainer.appendChild(alert);
+            
+            // Remove o alerta após 5 segundos
+            setTimeout(() => closeAlert(alert), 5000);
+        }
+        
+        // Função para fechar alertas
+        function closeAlert(alert) {
+            if (!alert.classList.contains('hiding')) {
+                alert.classList.add('hiding');
+                setTimeout(() => {
+                    if (alert.parentElement) {
+                        alert.parentElement.removeChild(alert);
+                    }
+                }, 300);
+            }
+        }
+
+        // Função para registrar diária com novo sistema de alertas
+        function registrarDiaria() {
+            const data = {
+                data_inicio: $('#data_inicio').val(),
+                data_fim: $('#data_fim').val(),
+                empresa: $('#empresa').val(),
+                entregador: $('#entregador').val()
+            };
+
+            // Validações básicas
+            if (!data.data_inicio || !data.data_fim || !data.empresa || !data.entregador) {
+                showAlert('Por favor, preencha todos os campos', 'danger');
+                return;
+            }
+
+            // Converte as datas para comparação
+            const inicio = new Date(data.data_inicio);
+            const fim = new Date(data.data_fim);
+
+            // Valida se a data de fim é maior que a data de início
+            if (fim <= inicio) {
+                showAlert('A data de fim deve ser maior que a data de início', 'danger');
+                return;
+            }
+
+            // Valida se o período é maior que 8 horas
+            const diffHours = (fim - inicio) / (1000 * 60 * 60);
+            if (diffHours > 8) {
+                showAlert('O período não pode ser maior que 8 horas', 'danger');
+                return;
+            }
+
+            // Valida período mínimo (30 minutos)
+            if (diffHours < 0.5) {
+                showAlert('O período mínimo é de 30 minutos', 'danger');
+                return;
+            }
+
+            $.ajax({
+                url: '/api/diaria',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('Diária registrada com sucesso!', 'success');
+                        
+                        // Limpa apenas o campo do entregador
+                        $('#entregador').val(null).trigger('change');
+                        
+                        // Atualiza a tabela de diárias
+                        carregarDiarias();
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    showAlert(response?.error || 'Erro ao registrar diária', 'danger');
+                }
+            });
+        }
+
+        // Processa mensagens flash do backend ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(message => {
+                const text = message.textContent;
+                const type = message.classList.contains('alert-danger') ? 'danger' : 
+                            message.classList.contains('alert-success') ? 'success' : 
+                            message.classList.contains('alert-warning') ? 'warning' : 'info';
+                
+                // Remove o alerta original
+                message.remove();
+                
+                // Mostra como alerta flutuante
+                showAlert(text, type);
+            });
+        });
+
+        // Configuração do Toastr
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        // Função para mostrar notificações
+        function showNotification(type, message) {
+            switch(type) {
+                case 'success':
+                    toastr.success(message);
+                    break;
+                case 'error':
+                    toastr.error(message);
+                    break;
+                case 'warning':
+                    toastr.warning(message);
+                    break;
+                case 'info':
+                    toastr.info(message);
+                    break;
+            }
+        }
+
         // Array para armazenar as diárias temporárias
         let diariasTemporarias = [];
+
+        // Função para salvar dados do formulário no localStorage
+        function salvarDadosFormulario() {
+            const form = document.getElementById('diariaForm');
+            const formData = {
+                data_inicio: form.data_inicio.value,
+                data_fim: form.data_fim.value,
+                empresa: form.empresa.value,
+                entregador: form.entregador.value
+            };
+            localStorage.setItem('formDiaria', JSON.stringify(formData));
+        }
+
+        // Função para restaurar dados do formulário do localStorage
+        function restaurarDadosFormulario() {
+            const formData = localStorage.getItem('formDiaria');
+            if (formData) {
+                const dados = JSON.parse(formData);
+                const form = document.getElementById('diariaForm');
+                form.data_inicio.value = dados.data_inicio || '';
+                form.data_fim.value = dados.data_fim || '';
+                form.empresa.value = dados.empresa || '';
+                
+                // Restaura o entregador usando Select2
+                const select2 = $('.select2-search');
+                select2.val(dados.entregador || '').trigger('change');
+            }
+        }
+
+        // Função para limpar dados do formulário do localStorage
+        function limparDadosFormulario() {
+            localStorage.removeItem('formDiaria');
+        }
 
         function initializeSelect2() {
             $('.select2-search').select2({
@@ -497,6 +898,8 @@
                         return "Buscando...";
                     }
                 }
+            }).on('change', function() {
+                salvarDadosFormulario();
             });
         }
 
@@ -508,7 +911,10 @@
             carregarFiltroEmpresas();
             
             // Inicializa o Select2 após carregar os dados
-            setTimeout(initializeSelect2, 500);
+            setTimeout(() => {
+                initializeSelect2();
+                restaurarDadosFormulario();
+            }, 500);
         }
 
         function carregarEmpresas() {
@@ -607,12 +1013,11 @@
         }
 
         function atualizarTabelaDiarias(diarias) {
-            console.log('Atualizando tabela com', diarias.length, 'diárias'); // Log para debug
+            console.log('Atualizando tabela com', diarias.length, 'diárias');
             const tbody = document.querySelector('#tabelaDiarias tbody');
             tbody.innerHTML = '';
             
             if (diarias && diarias.length > 0) {
-                // Ordena as diárias por data e hora de início
                 const diariasOrdenadas = [...diarias].sort((a, b) => {
                     const dataA = new Date(a['Data e hora de início']);
                     const dataB = new Date(b['Data e hora de início']);
@@ -622,6 +1027,12 @@
                 diariasOrdenadas.forEach(diaria => {
                     try {
                         const tr = document.createElement('tr');
+                        const identificador = JSON.stringify({
+                            data_inicio: diaria['Data e hora de início'],
+                            data_fim: diaria['Data e hora de fim'],
+                            empresa: diaria['Empresa'],
+                            entregador: diaria['Entregador']
+                        }).replace(/"/g, '&quot;');
                 
                         // Colunas básicas (visíveis para todos)
                         let html = `
@@ -639,7 +1050,17 @@
                                 <td data-label="Taxa total entregador">R$ ${typeof diaria['Taxa total entregador'] === 'number' ? diaria['Taxa total entregador'].toFixed(2) : '0.00'}</td>
                                 <td data-label="Taxa mínima cobrada">${diaria['Taxa mínima cobrada'] === 'S' ? 'Sim' : 'Não'}</td>
                                 <td data-label="Taxa mínima entregador">${diaria['Taxa mínima entregador'] === 'S' ? 'Sim' : 'Não'}</td>
-                                <td data-label="Usuário">${diaria['usuario_registro'] || ''}</td>`;
+                                <td data-label="Usuário">${diaria['usuario_registro'] || ''}</td>
+                                <td data-label="Ações">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-primary" onclick='editarDiaria(${identificador})'>
+                                            Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick='removerDiaria(${identificador})'>
+                                            Remover
+                                        </button>
+                                    </div>
+                                </td>`;
                         }
 
                         tr.innerHTML = html;
@@ -649,80 +1070,302 @@
                     }
                 });
             } else {
-                console.log('Nenhuma diária encontrada para exibir'); // Log para debug
-                tbody.innerHTML = '<tr><td colspan="{{ "9" if permissao == "ADM" else "4" }}" class="text-center">Nenhuma diária encontrada</td></tr>';
+                console.log('Nenhuma diária encontrada para exibir');
+                tbody.innerHTML = '<tr><td colspan="{{ "12" if permissao == "ADM" else "4" }}" class="text-center">Nenhuma diária encontrada</td></tr>';
             }
         }
 
+        // Variáveis globais para controle de edição
+        let diariaEmEdicao = null;
+        let indiceEmEdicao = null;
+        let modoEdicao = false;
+
+        function editarDiariaTemporaria(index) {
+            const diaria = diariasTemporarias[index];
+            
+            // Preenche o formulário com os dados da diária
+            document.getElementById('data_inicio').value = diaria.data_inicio;
+            document.getElementById('data_fim').value = diaria.data_fim;
+            document.querySelector('select[name="empresa"]').value = diaria.empresa;
+            $('.select2-search').val(diaria.entregador).trigger('change');
+            
+            // Marca que estamos em modo de edição
+            modoEdicao = true;
+            indiceEmEdicao = index;
+            
+            // Altera o texto do botão
+            const btnAdicionar = document.querySelector('button[onclick="adicionarDiariaTemporaria()"]');
+            btnAdicionar.textContent = 'Salvar Alterações';
+            btnAdicionar.classList.add('btn-success');
+            btnAdicionar.classList.remove('btn-primary');
+            
+            // Rola a página até o formulário
+            document.getElementById('diariaForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Modifica a função adicionarDiariaTemporaria para lidar com edição
         function adicionarDiariaTemporaria() {
             const form = document.getElementById('diariaForm');
             const formData = new FormData(form);
             
             // Validação básica inicial
             if (!formData.get('data_inicio') || !formData.get('data_fim') || !formData.get('empresa') || !formData.get('entregador')) {
-                alert('Por favor, preencha todos os campos.');
+                mostrarMensagem('danger', 'Por favor, preencha todos os campos.');
                 return;
             }
+            
             // Validação do período
             const dataInicio = new Date(formData.get('data_inicio'));
             const dataFim = new Date(formData.get('data_fim'));
+            
+            if (dataFim <= dataInicio) {
+                mostrarMensagem('danger', 'A data de fim deve ser maior que a data de início.');
+                return;
+            }
             
             // Calcula a diferença em horas
             const diffTime = Math.abs(dataFim - dataInicio);
             const diffHours = diffTime / (1000 * 60 * 60);
             
             if (diffHours > 8) {
-                alert('O período não pode ser maior que 8 horas.');
+                mostrarMensagem('danger', 'O período não pode ser maior que 8 horas.');
                 return;
             }
             
             if (diffHours < 0.5) {
-                alert('O período mínimo é de 30 minutos.');
+                mostrarMensagem('danger', 'O período mínimo é de 30 minutos.');
                 return;
             }
-            // Busca as informações da empresa selecionada
-            fetch('/api/empresas/ativas')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(empresas => {
-                    console.log('Empresas recebidas:', empresas);
-                    const empresa = empresas.find(e => e.nome === formData.get('empresa'));
-                    
-                    if (!empresa) {
-                        alert('Empresa não encontrada nos registros ativos.');
-                        return;
-                    }
 
-                    const diaria = {
-                        data_inicio: formData.get('data_inicio'),
-                        data_fim: formData.get('data_fim'),
-                        empresa: formData.get('empresa'),
-                        entregador: formData.get('entregador'),
-                        veiculo: empresa.veiculo
-                    };
+            // Verifica sobreposição com outras diárias temporárias
+            const diariasParaVerificar = modoEdicao ? 
+                diariasTemporarias.filter((_, i) => i !== indiceEmEdicao) : 
+                diariasTemporarias;
 
-                    // Adiciona a diária ao array temporário
-                    diariasTemporarias.push(diaria);
-                    
-                    // Atualiza a tabela de diárias temporárias
-                    atualizarTabelaTemporaria();
-                    
-                    // form.reset(); // Comentado para manter os outros campos preenchidos
-                    
-                    // Limpa o Select2 do entregador
-                    $('.select2-search').val(null).trigger('change');
-                    
-                    // Habilita o botão de enviar escala
-                    document.getElementById('btnEnviarEscala').disabled = false;
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar informações da empresa:', error);
-                    alert('Erro ao adicionar diária. Por favor, tente novamente.');
+            const temSobreposicao = diariasParaVerificar.some(d => {
+                const dInicio = new Date(d.data_inicio);
+                const dFim = new Date(d.data_fim);
+                return d.entregador === formData.get('entregador') && (
+                    (dataInicio >= dInicio && dataInicio < dFim) ||
+                    (dataFim > dInicio && dataFim <= dFim) ||
+                    (dataInicio <= dInicio && dataFim >= dFim)
+                );
+            });
+            
+            if (temSobreposicao) {
+                mostrarMensagem('danger', 'Já existe uma diária para este entregador neste período.');
+                return;
+            }
+
+            // Se estiver em modo de edição, remove a diária antiga
+            if (modoEdicao) {
+                diariasTemporarias.splice(indiceEmEdicao, 1);
+                modoEdicao = false;
+                indiceEmEdicao = null;
+                
+                // Restaura o botão
+                const btnAdicionar = document.querySelector('button[onclick="adicionarDiariaTemporaria()"]');
+                btnAdicionar.textContent = 'Adicionar Diária';
+                btnAdicionar.classList.add('btn-primary');
+                btnAdicionar.classList.remove('btn-success');
+            }
+
+            // Adiciona a diária temporária
+            diariasTemporarias.push({
+                data_inicio: formData.get('data_inicio'),
+                data_fim: formData.get('data_fim'),
+                empresa: formData.get('empresa'),
+                entregador: formData.get('entregador')
+            });
+            
+            // Atualiza a tabela
+            atualizarTabelaTemporaria();
+            
+            // Habilita o botão de enviar escala
+            document.getElementById('btnEnviarEscala').disabled = false;
+            
+            // Mantém os valores dos campos, exceto o entregador
+            const dataInicioAtual = document.getElementById('data_inicio').value;
+            const dataFimAtual = document.getElementById('data_fim').value;
+            const empresaAtual = document.querySelector('select[name="empresa"]').value;
+            
+            // Limpa apenas o campo do entregador usando Select2
+            $('.select2-search').val(null).trigger('change');
+            
+            // Restaura os valores mantidos
+            document.getElementById('data_inicio').value = dataInicioAtual;
+            document.getElementById('data_fim').value = dataFimAtual;
+            document.querySelector('select[name="empresa"]').value = empresaAtual;
+            
+            // Atualiza o localStorage com os novos valores
+            salvarDadosFormulario();
+            
+            // Mostra mensagem de sucesso
+            const mensagem = modoEdicao ? 
+                'Diária atualizada com sucesso!' : 
+                'Diária adicionada à lista. Clique em "Enviar Escala" para salvar.';
+            mostrarMensagem('success', mensagem);
+        }
+
+        function editarDiaria(diaria) {
+            console.log('Editando diária:', diaria);
+            
+            // Mapeia os campos para o formato esperado pela API
+            diariaEmEdicao = {
+                data_inicio: diaria['Data e hora de início'],
+                data_fim: diaria['Data e hora de fim'],
+                empresa: diaria['Empresa'],
+                entregador: diaria['Entregador']
+            };
+            
+            // Preenche o formulário de edição
+            document.getElementById('edit_data_inicio').value = formatarDataParaInput(diaria['Data e hora de início']);
+            document.getElementById('edit_data_fim').value = formatarDataParaInput(diaria['Data e hora de fim']);
+            document.getElementById('edit_empresa').value = diaria['Empresa'];
+            
+            // Carrega as opções de empresa e entregador se necessário
+            carregarOpcoesEdicao().then(() => {
+                // Seleciona o entregador usando Select2
+                $('#edit_entregador').val(diaria['Entregador']).trigger('change');
+                
+                // Mostra o modal
+                new bootstrap.Modal(document.getElementById('editarDiariaModal')).show();
+            });
+        }
+
+        function removerDiaria(diaria) {
+            console.log('Removendo diária:', diaria);
+            
+            // Mapeia os campos para o formato esperado pela API
+            diariaEmEdicao = {
+                data_inicio: diaria['Data e hora de início'],
+                data_fim: diaria['Data e hora de fim'],
+                empresa: diaria['Empresa'],
+                entregador: diaria['Entregador']
+            };
+            
+            // Preenche os detalhes no modal de confirmação
+            document.getElementById('removerDiariaDetalhes').innerHTML = `
+                <strong>Empresa:</strong> ${diaria['Empresa']}<br>
+                <strong>Entregador:</strong> ${diaria['Entregador']}<br>
+                <strong>Início:</strong> ${formatarDataHora(diaria['Data e hora de início'])}<br>
+                <strong>Fim:</strong> ${formatarDataHora(diaria['Data e hora de fim'])}
+            `;
+            
+            // Mostra o modal
+            new bootstrap.Modal(document.getElementById('removerDiariaModal')).show();
+        }
+
+        async function salvarEdicaoDiaria() {
+            const form = document.getElementById('editarDiariaForm');
+            const formData = new FormData(form);
+            
+            const dados = {
+                diaria_antiga: diariaEmEdicao,
+                diaria_nova: {
+                    data_inicio: formData.get('data_inicio'),
+                    data_fim: formData.get('data_fim'),
+                    empresa: formData.get('empresa'),
+                    entregador: formData.get('entregador')
+                }
+            };
+            
+            try {
+                const response = await fetch('/api/diaria/editar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
                 });
+                
+                const resultado = await response.json();
+                if (resultado.status === 'success') {
+                    mostrarMensagem('success', 'Diária atualizada com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('editarDiariaModal')).hide();
+                    carregarDiarias();
+                } else {
+                    mostrarMensagem('danger', 'Erro ao atualizar diária: ' + resultado.message);
+                }
+            } catch (error) {
+                console.error('Erro ao salvar edição:', error);
+                mostrarMensagem('danger', 'Erro ao salvar edição: ' + error.message);
+            }
+        }
+
+        async function confirmarRemocaoDiaria() {
+            try {
+                const response = await fetch('/api/diaria/remover', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(diariaEmEdicao)
+                });
+                
+                const resultado = await response.json();
+                if (resultado.status === 'success') {
+                    mostrarMensagem('success', 'Diária removida com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('removerDiariaModal')).hide();
+                    carregarDiarias();
+                } else {
+                    mostrarMensagem('danger', 'Erro ao remover diária: ' + resultado.message);
+                }
+            } catch (error) {
+                console.error('Erro ao remover diária:', error);
+                mostrarMensagem('danger', 'Erro ao remover diária: ' + error.message);
+            }
+        }
+
+        function formatarDataParaInput(dataString) {
+            try {
+                const data = new Date(dataString);
+                return data.toISOString().slice(0, 16);
+            } catch (err) {
+                console.error('Erro ao formatar data para input:', err);
+                return '';
+            }
+        }
+
+        async function carregarOpcoesEdicao() {
+            try {
+                // Carrega empresas
+                const empresasResponse = await fetch('/api/empresas');
+                const empresas = await empresasResponse.json();
+                const selectEmpresa = document.getElementById('edit_empresa');
+                selectEmpresa.innerHTML = '<option value="">Selecione uma empresa</option>';
+                empresas.forEach(empresa => {
+                    selectEmpresa.innerHTML += `<option value="${empresa.nome}">${empresa.nome}</option>`;
+                });
+                
+                // Carrega entregadores
+                const entregadoresResponse = await fetch('/api/entregadores');
+                const entregadores = await entregadoresResponse.json();
+                const selectEntregador = document.getElementById('edit_entregador');
+                selectEntregador.innerHTML = '<option value="">Selecione um entregador</option>';
+                entregadores.forEach(entregador => {
+                    selectEntregador.innerHTML += `<option value="${entregador.nome}">${entregador.nome}</option>`;
+                });
+                
+                // Inicializa Select2 no campo de entregador
+                $('#edit_entregador').select2({
+                    theme: 'bootstrap-5',
+                    dropdownParent: $('#editarDiariaModal'),
+                    placeholder: 'Selecione ou digite para buscar',
+                    allowClear: true,
+                    language: {
+                        noResults: function() {
+                            return "Nenhum resultado encontrado";
+                        },
+                        searching: function() {
+                            return "Buscando...";
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao carregar opções:', error);
+                mostrarMensagem('danger', 'Erro ao carregar opções: ' + error.message);
+            }
         }
 
         function atualizarTabelaTemporaria() {
@@ -742,9 +1385,14 @@
                     <td data-label="Empresa">${diaria.empresa}</td>
                     <td data-label="Entregador">${diaria.entregador}</td>
                     <td data-label="Ações">
-                        <button class="btn btn-sm btn-danger" onclick="removerDiariaTemporaria(${index})">
-                            Remover
-                        </button>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary" onclick="editarDiariaTemporaria(${index})">
+                                Editar
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="removerDiariaTemporaria(${index})">
+                                Remover
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -774,6 +1422,11 @@
         function enviarEscala() {
             console.log('Enviando escala com', diariasTemporarias.length, 'diárias');
             
+            // Desabilita o botão de enviar para evitar duplo envio
+            const btnEnviar = document.getElementById('btnEnviarEscala');
+            btnEnviar.disabled = true;
+            btnEnviar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+            
             // Cria um array para armazenar os resultados
             let resultados = [];
             let falhas = [];
@@ -781,75 +1434,127 @@
             // Função para enviar uma diária e aguardar sua conclusão
             async function enviarDiaria(diaria) {
                 try {
-                    const response = await fetch('/api/diaria', {
+                    // Mapeia os campos para o formato esperado pela API
+                    const dadosParaEnviar = {
+                        data_inicio: diaria.data_inicio,
+                        data_fim: diaria.data_fim,
+                        empresa: diaria.empresa,
+                        entregador: diaria.entregador
+                    };
+
+                    return fetch('/api/diaria', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(diaria)
-                    });
-                    
-                    const resultado = await response.json();
-                    if (resultado.status === 'success') {
-                        resultados.push(diaria);
-                    } else {
-                        falhas.push({diaria: diaria, erro: resultado.message});
-                    }
+                        body: JSON.stringify(dadosParaEnviar)
+                    }).then(response => response.json());
                 } catch (error) {
-                    falhas.push({diaria: diaria, erro: error.message});
+                    return Promise.reject(error);
                 }
             }
             
             // Função principal assíncrona para enviar todas as diárias em sequência
             async function enviarTodasDiarias() {
-                console.log('Iniciando envio de diárias...');
-                
-                // Envia as diárias uma por uma
-                for (const diaria of diariasTemporarias) {
-                    await enviarDiaria(diaria);
-                }
-                
-                // Após todas as diárias serem processadas
-                console.log('Diárias registradas:', resultados.length);
-                console.log('Falhas:', falhas.length);
-                
-                if (falhas.length > 0) {
-                    let mensagemErro = 'Algumas diárias não foram registradas:\n\n';
-                    falhas.forEach(f => {
-                        mensagemErro += `- ${f.diaria.entregador} (${f.diaria.empresa}): ${f.erro}\n`;
-                    });
-                    alert(mensagemErro);
-                }
-                
-                if (resultados.length > 0) {
-                    // Limpa apenas as diárias que foram registradas com sucesso
-                    diariasTemporarias = diariasTemporarias.filter(d => 
-                        !resultados.some(r => 
-                            r.data_inicio === d.data_inicio && 
-                            r.entregador === d.entregador && 
-                            r.empresa === d.empresa
-                        )
-                    );
-                    
-                    // Atualiza a interface
-                    atualizarTabelaTemporaria();
-                    if (diariasTemporarias.length === 0) {
-                        document.getElementById('btnEnviarEscala').disabled = true;
+                const btnEnviar = document.getElementById('btnEnviarEscala');
+                btnEnviar.disabled = true;
+                btnEnviar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+
+                try {
+                    const resultados = [];
+                    const falhas = [];
+
+                    for (const diaria of diariasTemporarias) {
+                        try {
+                            const resultado = await enviarDiaria(diaria);
+                            if (resultado.success) {
+                                resultados.push(diaria);
+                            } else {
+                                falhas.push({diaria: diaria, erro: resultado.error});
+                            }
+                        } catch (error) {
+                            falhas.push({diaria: diaria, erro: error.message});
+                        }
                     }
-                    
-                    // Recarrega a tabela de diárias registradas
-                    setTimeout(carregarDiarias, 500);
-                    
-                    // Mostra mensagem de sucesso
-                    alert(`${resultados.length} diária(s) registrada(s) com sucesso!`);
+
+                    // Após enviar todas, exibe o resultado
+                    if (falhas.length === 0) {
+                        // Sucesso total
+                        mostrarMensagem('success', 'Todas as diárias foram registradas com sucesso!');
+                        diariasTemporarias = [];
+                        atualizarTabelaTemporaria();
+                        carregarDiarias();
+                        
+                        // Mantém os valores dos campos, exceto o entregador
+                        const dataInicioAtual = document.getElementById('data_inicio').value;
+                        const dataFimAtual = document.getElementById('data_fim').value;
+                        const empresaAtual = document.querySelector('select[name="empresa"]').value;
+                        
+                        // Limpa apenas o campo do entregador usando Select2
+                        $('.select2-search').val(null).trigger('change');
+                        
+                        // Restaura os valores mantidos
+                        document.getElementById('data_inicio').value = dataInicioAtual;
+                        document.getElementById('data_fim').value = dataFimAtual;
+                        document.querySelector('select[name="empresa"]').value = empresaAtual;
+                        
+                        // Atualiza o localStorage com os novos valores
+                        salvarDadosFormulario();
+                    } else {
+                        // Algumas falhas
+                        let mensagemErro = 'Ocorreram erros ao registrar algumas diárias:<br>';
+                        falhas.forEach(f => {
+                            mensagemErro += `<br>- ${f.diaria.entregador} (${f.diaria.empresa}): ${f.erro}`;
+                        });
+                        mostrarMensagem('danger', mensagemErro);
+                        
+                        // Remove apenas as diárias que foram salvas com sucesso
+                        diariasTemporarias = diariasTemporarias.filter(d => 
+                            !resultados.some(r => 
+                                r.data_inicio === d.data_inicio && 
+                                r.data_fim === d.data_fim && 
+                                r.empresa === d.empresa && 
+                                r.entregador === d.entregador
+                            )
+                        );
+                        atualizarTabelaTemporaria();
+                    }
+                } catch (error) {
+                    console.error('Erro ao enviar diárias:', error);
+                    mostrarMensagem('danger', 'Erro ao enviar diárias: ' + error.message);
+                } finally {
+                    // Reabilita o botão
+                    btnEnviar.disabled = diariasTemporarias.length === 0;
+                    btnEnviar.innerHTML = 'Enviar Escala';
                 }
             }
             
-            // Inicia o processo de envio
+            // Inicia o envio
             enviarTodasDiarias().catch(error => {
                 console.error('Erro ao enviar diárias:', error);
-                alert('Erro ao enviar diárias. Por favor, tente novamente.');
+                mostrarMensagem('danger', 'Erro ao enviar diárias: ' + error.message);
+                btnEnviar.disabled = false;
+                btnEnviar.innerHTML = 'Enviar Escala';
             });
+        }
+
+        function mostrarMensagem(tipo, mensagem) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                ${mensagem}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            `;
+            
+            // Insere a mensagem no topo do container
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Remove a mensagem após 5 segundos
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
         }
 
         function abrirModalExportar() {
@@ -1023,9 +1728,16 @@
             adicionarDiariaTemporaria();
         });
 
-        // Carrega os dados ao iniciar a página
+        // Adiciona eventos para salvar dados do formulário
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Página carregada, iniciando carregamento de dados...');
+            const form = document.getElementById('diariaForm');
+            
+            // Salva dados quando os campos são alterados
+            form.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', salvarDadosFormulario);
+            });
+            
+            // Restaura dados ao carregar a página
             carregarDados();
         });
     </script>
