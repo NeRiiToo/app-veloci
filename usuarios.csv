@@ -1,11 +1,9 @@
 username,senha,permissao,empresas_vinculadas
 admin,7d39044c2cdb7d6cac3daa13da26ea69ded1f810d4157cb39af087ea156619ab,ADM,
 Moab,a3f0e945a352c13038b1d4e7f5c465fa4295fc8711b4cc8df17071109b089ed5,ADM,
-supervisor,8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92,supervisor,Carvão
-Rafael,7d12ba56e9f8b3dc64f77c87318c4f37bc12cfbf1a37573cdf3e4fa683f20155,supervisor,Carvão|Cheiro de Pizza|Pizza Hut Ondina|Cantina Volpi - ondina
 Marcos,96cae35ce8a9b0244178bf28e4966c2ce1b8385723a96a6b838858cdd6ca0a1e,supervisor,Cantina Volpi - Paralela|Cantina Volpi Lauro|Nonni La Pasta|Cantina Volpi - Itaigara|Pizza Hut - Pituba|Oshi|Carvão|Cheiro de Pizza|Restaurante Marinata|Mariposa & Pura vida - Barra|Pizza Hut Ondina|Cantina Volpi - pituba|Cantina Volpi - ondina
 Henrique,03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4,ADM,
-Nilton,7a5df5ffa0dec2228d90b8d0a0f1b0767b748b0a41314c123075b8289e4e053f,supervisor,Cantina Volpi - Itaigara|Pizza Hut - Pituba|Cheiro de Pizza|Cantina Volpi - pituba
+Nilton,03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4,supervisor,
 Vinicius,fe1ad13c3caa21676fb70219cf62632e266b34facd799da4d0eb2683e3005f3d,supervisor,Carvão|Cheiro de Pizza|Pizza Hut Ondina|Cantina Volpi - ondina
 Ewerton,ab2e039f1f04c7774154697a00a9c87e8abc38a8ab6d9ddbb5f4523b5af7d10f,ADM,Cantina Volpi - Paralela|Cantina Volpi Lauro|Nonni La Pasta|Cantina Volpi - Itaigara|Pizza Hut - Pituba|Oshi|Carvão|Cheiro de Pizza|Restaurante Marinata|Mariposa & Pura vida - Barra|Pizza Hut Ondina|Cantina Volpi - pituba|Cantina Volpi - ondina
 Mario,4892e7f8f61b83deef1b07b6c31a6fc499fdbd619122fded413a47702a793b39,supervisor,Cantina Volpi - Paralela

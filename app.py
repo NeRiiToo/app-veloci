@@ -530,7 +530,7 @@ def carregar_diarias():
                                 'Entregador': entregador,
                                 'Taxa total cobrada': taxa_total_cobrada,
                                 'Taxa total entregador': taxa_total_entregador,
-                                'usuario_registro': usuario
+                                'usuario_registro': ₢
                             })
                     except Exception as e:
                         print(f"Erro ao processar log: {str(e)}")
@@ -922,9 +922,9 @@ def api_diaria():
         if data_fim <= data_inicio:
             return jsonify({'status': 'error', 'message': 'A data de fim deve ser maior que a data de início'}), 400
             
-        # Valida se o período é maior que 24 horas
-        if (data_fim - data_inicio).total_seconds() > 86400:  # 24 horas em segundos
-            return jsonify({'status': 'error', 'message': 'O período não pode ser maior que 24 horas'}), 400
+        # Valida se o período é maior que 8 horas
+        if (data_fim - data_inicio).total_seconds() > 28800:  # 8 horas em segundos
+            return jsonify({'status': 'error', 'message': 'O período não pode ser maior que 8 horas'}), 400
             
         # Valida período mínimo (30 minutos)
         if (data_fim - data_inicio).total_seconds() < 1800:  # 30 minutos em segundos

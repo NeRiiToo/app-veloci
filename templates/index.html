@@ -663,7 +663,23 @@
                 alert('Por favor, preencha todos os campos.');
                 return;
             }
-
+            // Validação do período
+            const dataInicio = new Date(formData.get('data_inicio'));
+            const dataFim = new Date(formData.get('data_fim'));
+            
+            // Calcula a diferença em horas
+            const diffTime = Math.abs(dataFim - dataInicio);
+            const diffHours = diffTime / (1000 * 60 * 60);
+            
+            if (diffHours > 8) {
+                alert('O período não pode ser maior que 8 horas.');
+                return;
+            }
+            
+            if (diffHours < 0.5) {
+                alert('O período mínimo é de 30 minutos.');
+                return;
+            }
             // Busca as informações da empresa selecionada
             fetch('/api/empresas/ativas')
                 .then(response => {
@@ -968,9 +984,9 @@
                 // Define a data mínima como a data de início
                 const minDate = inicio.toISOString().slice(0, 16);
                 
-                // Calcula a data máxima (1 dia depois da data de início)
+                // Calcula a data máxima (8 horas depois da data de início)
                 const maxDate = new Date(inicio);
-                maxDate.setDate(maxDate.getDate() + 1);
+                maxDate.setHours(maxDate.getHours() + 8);
                 const maxDateStr = maxDate.toISOString().slice(0, 16);
                 
                 // Atualiza os atributos min e max do campo de data fim
