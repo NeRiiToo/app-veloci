@@ -1,192 +1,146 @@
 # Sistema de Gerenciamento de Escalas - Veloci
 
-Sistema web para gerenciamento de entregadores e empresas de delivery, desenvolvido com Python (Flask) e interface responsiva com Bootstrap.
+Sistema web para gerenciamento de escalas de entregadores da Veloci. Controla cadastro de empresas, entregadores, diarias (turnos) e exportacao de relatorios.
+
+## Stack
+
+- **Backend**: Django 5.1 (Python 3.12)
+- **Banco de dados**: PostgreSQL 16
+- **Frontend**: Bootstrap 5 + jQuery + Select2 + AJAX
+- **Templates**: Jinja2/Django Templates
+- **Servidor**: Gunicorn (WSGI)
+- **Infra**: Docker + Docker Compose
+- **Arquivos estaticos**: WhiteNoise
 
 ## Funcionalidades
 
-### Gestão de Usuários
-- Cadastro de usuários com diferentes níveis de permissão:
-  - Administrador (ADM): Acesso total ao sistema
-  - Supervisor: Acesso limitado às empresas vinculadas
-- Login e controle de acesso com sessão
-- Vinculação de múltiplas empresas aos usuários supervisores
-- Alteração de senha
-- Exclusão de usuários (com proteção para último administrador)
+### Gestao de Usuarios
+- Cadastro com niveis de permissao: **ADM** (acesso total) e **Supervisor** (acesso restrito)
+- Login e controle de acesso com sessao Django
+- Vinculacao de multiplas empresas aos supervisores
+- Alteracao de senha e exclusao (com protecao para ultimo administrador)
 
-### Gestão de Empresas
-- Cadastro completo de empresas com:
-  - Nome da empresa
-  - Tipo de veículo
-  - Tipo de valor (Único/Por Hora)
-  - Mínimo garantido (Sim/Não)
-  - Taxa total cobrada (dias úteis)
-  - Taxa total entregador (dias úteis)
-  - Taxa total cobrada (fim de semana)
-  - Taxa total entregador (fim de semana)
-  - Dias específicos com valores diferentes
-  - Status (Ativo/Inativo)
-- Edição de todas as informações da empresa
-- Ativação/Desativação de empresas
-- Visualização em tabela com filtros
+### Gestao de Empresas
+- Cadastro com nome, tipo de veiculo, tipo de valor (unico/por hora), minimo garantido
+- Taxas diferenciadas para dias uteis e fim de semana
+- Dias especificos com valores diferentes
+- Ativacao/desativacao (soft delete)
 
-### Gestão de Entregadores
-- Cadastro de entregadores com:
-  - Nome completo
-  - CPF (com validação)
-  - Status (Ativo/Inativo)
-- Edição de dados do entregador
-- Ativação/Desativação de entregadores
-- Visualização em tabela com filtros
+### Gestao de Entregadores
+- Cadastro com nome e CPF (unico)
+- Importacao em massa via CSV
+- Ativacao/desativacao (soft delete)
 
-### Registro de Diárias
-- Registro completo de diárias com:
-  - Data e hora de início/fim
-  - Seleção de empresa e entregador
-  - Tipo de veículo
-  - Taxas aplicadas (normal ou fim de semana)
-  - Cálculo automático baseado no tipo de valor
-- Exportação de relatórios por período
-- Validações de horários e disponibilidade
+### Registro de Diarias (Escalas)
+- Registro com data/hora de inicio e fim, empresa e entregador
+- Calculo automatico de taxas baseado no tipo de valor e dia da semana
+- Validacao de conflito de horario por entregador
+- Validacao de periodo (minimo 30min, maximo 8h)
+- Exportacao de relatorios por periodo em CSV
 
 ### Sistema de Logs
-- Registro detalhado de todas as ações no sistema:
-  - Login/Logout de usuários
-  - Cadastros e alterações de empresas
-  - Cadastros e alterações de entregadores
-  - Registro de diárias
-  - Exportação de relatórios
-- Filtros avançados de logs por:
-  - Nível (Info, Erro, Aviso)
-  - Usuário
-  - Empresa
-  - Período (Data inicial/final)
-- Visualização colorida por tipo de log
-- Exportação de logs filtrados
-
-### Interface e Usabilidade
-- Design responsivo com Bootstrap 5
-- Menus dinâmicos baseados na permissão do usuário
-- Dropdowns aprimorados com Select2
-- Validações em tempo real
-- Mensagens de feedback para todas as ações
-- Modais para edição rápida
-- Tabelas interativas com ordenação
-
-## Requisitos Técnicos
-
-### Frontend
-- HTML5
-- CSS3 (Bootstrap 5)
-- JavaScript
-  - jQuery 3.6.0
-  - Select2 4.1.0
-  - AJAX para requisições assíncronas
-  - Validações client-side
-
-### Backend
-- Python 3.7+
-- Flask (framework web)
-- Bibliotecas Python:
-  - pandas: manipulação de dados
-  - logging: sistema de logs
-  - werkzeug: segurança e utilitários
-  - datetime: manipulação de datas
-
-### Armazenamento
-- Arquivos CSV para persistência:
-  - usuarios.csv: dados dos usuários
-  - empresas.csv: dados das empresas
-  - entregadores.csv: dados dos entregadores
-  - registros.csv: registro de diárias
-- Sistema de logs:
-  - Arquivo sistema.log
-  - Rotação automática de logs
-
-## Instalação
-
-1. Clone o repositório:
-```bash
-git clone [URL_DO_REPOSITORIO]
-cd [NOME_DO_DIRETORIO]
-```
-
-2. Instale as dependências:
-```bash
-pip install -r requirements.txt
-```
-
-3. Configure as permissões dos diretórios:
-```bash
-chmod 755 logs/
-chmod 644 *.csv
-```
-
-## Executando o Sistema
-
-1. Inicie o servidor Flask:
-```bash
-python app.py
-```
-
-2. Acesse o sistema no navegador:
-```
-http://localhost:5000
-```
+- Registro de todas as acoes do usuario no banco de dados (tabela `core_logsistema`)
+- Filtros por nivel (Info, Erro, Aviso), usuario, empresa e periodo
+- Visualizacao colorida por tipo de log
 
 ## Estrutura do Projeto
 
 ```
-.
-├── app.py                  # Aplicação principal Flask
-├── requirements.txt        # Dependências do projeto
-├── static/                # Arquivos estáticos
-│   ├── css/              # Estilos CSS
-│   └── js/               # Scripts JavaScript
-├── templates/            # Templates HTML
-│   ├── index.html        # Página principal
-│   ├── login.html        # Página de login
-│   ├── cadastros.html    # Gestão de cadastros
-│   ├── cadastro_usuario.html  # Gestão de usuários
-│   └── logs.html         # Visualização de logs
-├── usuarios.csv          # Dados dos usuários
-├── empresas.csv         # Dados das empresas
-├── entregadores.csv     # Dados dos entregadores
-├── registros.csv        # Registro de diárias
-└── logs/
-    └── sistema.log      # Logs do sistema
+manage.py                   # Entry point Django
+veloci/                     # Configuracao do projeto Django
+    settings.py
+    urls.py
+    wsgi.py
+core/                       # App: autenticacao, empresas, entregadores, logs
+    models.py               # Empresa, Entregador, PerfilUsuario, LogSistema
+    views.py                # Views de auth, cadastros e APIs
+    urls.py
+    admin.py
+    management/             # Comandos customizados (ensure_admin)
+    migrations/
+operacao/                   # App: escalas/diarias
+    models.py               # Escala
+    views.py                # APIs de diarias, exportacao, logs
+    services.py             # Logica de negocio (criar/editar/remover escala)
+    selectors.py            # Queries e exportacao CSV
+    urls.py
+    admin.py
+    migrations/
+templates/                  # Templates HTML
+    base.html
+    login.html
+    index.html              # Dashboard principal
+    cadastros.html          # Gestao de empresas e entregadores
+    cadastro_usuario.html   # Gestao de usuarios (admin)
+    logs.html               # Visualizacao de logs
+static/
+    css/                    # Estilos (cor primaria: #1B3B6F)
+    js/                     # Scripts (index, cadastros, cadastro_usuario, logs)
+Dockerfile
+docker-compose.yml
+requirements.txt
 ```
 
-## Segurança
+## Instalacao e Execucao
 
-- Autenticação de usuários com sessão
-- Controle de acesso baseado em permissões
-- Proteção contra CSRF
-- Validação de dados em ambos os lados
-- Sanitização de inputs
-- Logs detalhados de todas as ações
-- Backup automático dos arquivos CSV
+### Com Docker (recomendado)
 
-## Manutenção
+```bash
+docker compose up --build
+```
 
-- Logs rotacionados automaticamente
-- Backup diário dos arquivos CSV
-- Validação periódica de integridade
-- Limpeza automática de sessões expiradas
+O sistema estara disponivel em `http://localhost:8000`. O banco PostgreSQL, migracoes e usuario admin sao configurados automaticamente.
 
-## Suporte
+### Sem Docker (desenvolvimento local)
 
-Para suporte ou dúvidas, entre em contato:
-- Email: [EMAIL_SUPORTE]
-- Telefone: [TELEFONE_SUPORTE]
+1. Crie e ative um ambiente virtual:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+.venv\Scripts\activate     # Windows
+```
 
-## Licença
+2. Instale as dependencias:
+```bash
+pip install -r requirements.txt
+```
 
-Este projeto está sob a licença [TIPO_LICENCA].
+3. Configure as variaveis de ambiente:
+```bash
+export DATABASE_URL=postgres://usuario:senha@localhost:5432/veloci
+export DJANGO_SECRET_KEY=sua-chave-secreta
+export DJANGO_DEBUG=True
+```
 
-## Contribuição
+4. Rode as migracoes e inicie o servidor:
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/NovaFuncionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
-5. Abra um Pull Request 
+## Variaveis de Ambiente
+
+| Variavel | Descricao | Padrao |
+|---|---|---|
+| `DATABASE_URL` | Connection string do PostgreSQL | — |
+| `DJANGO_SECRET_KEY` | Chave secreta do Django | — |
+| `DJANGO_DEBUG` | Modo debug | `False` |
+
+## Dependencias
+
+```
+django==5.1.5
+psycopg2-binary==2.9.9
+gunicorn==21.2.0
+dj-database-url==2.1.0
+whitenoise==6.8.2
+```
+
+## Seguranca
+
+- Autenticacao com sessao Django
+- Controle de acesso por decorators (`@login_required`, `@admin_required`)
+- Supervisores so acessam empresas vinculadas ao seu perfil
+- Protecao CSRF em todos os formularios
+- Auditoria completa de acoes no banco de dados
