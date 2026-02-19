@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: veloci
+      POSTGRES_USER: veloci
+      POSTGRES_PASSWORD: veloci_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate --noinput && python manage.py ensure_admin && gunicorn veloci.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://veloci:veloci_secret@db:5432/veloci
+      - DJANGO_SECRET_KEY=insecure-dev-key-change-in-production
+      - DJANGO_DEBUG=True
+
+volumes:
+  postgres_data:
+  static_volume:
