@@ -1,0 +1,32 @@
+/* Layout */
+body { background-color: #f8f9fa; padding-bottom: 20px; }
+
+.cadastro-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 15px;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.select2-container { width: 100% !important; }
+.empresas-select { min-height: 120px; }
+.btn-group { display: flex; gap: 0.5rem; }
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .cadastro-container { margin: 10px; padding: 10px; }
+    .btn { width: 100%; margin-bottom: 5px; }
+    .btn-group { flex-direction: column; }
+    .btn-group .btn { border-radius: 5px !important; margin-bottom: 5px; }
+}
+
+@media (max-width: 576px) {
+    .container { padding-left: 10px; padding-right: 10px; }
+    h1, h2, h3, h4, h5 { font-size: 1.2rem; }
+    input.form-control, select.form-select { font-size: 16px; height: 44px; }
+    .modal-content { border-radius: 10px; }
+    .modal-body { padding: 1rem; }
+    .modal-footer .btn { width: 100%; margin: 0.25rem 0; }
+}

@@ -1,0 +1,20 @@
+/* Layout */
+body { padding-bottom: 20px; }
+
+.dias-semana {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.dias-semana .form-check { margin-right: 15px; }
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .container { padding-left: 10px; padding-right: 10px; }
+    .card-body { padding: 15px; }
+    .btn { width: 100%; margin-bottom: 5px; }
+    .btn-group { display: flex; flex-direction: column; }
+    .btn-group .btn { border-radius: 5px !important; margin-bottom: 5px; }
+}

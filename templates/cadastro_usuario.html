@@ -1,566 +1,166 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Usuário - Gerenciamento de Escalas</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-    <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
-    <style>
-        /* Estilos gerais */
-        body {
-            background-color: #f8f9fa;
-            padding-bottom: 20px;
-        }
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Cadastro de Usuário - Gerenciamento de Escalas{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
 
-        /* Container principal */
-        .cadastro-container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 15px;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px var(--shadow-color);
-        }
+{% block extra_css %}
+<link href="{% static 'css/cadastro_usuario.css' %}" rel="stylesheet">
+{% endblock %}
 
-        /* Estilos para tabelas responsivas */
-        .table-responsive {
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-radius: 5px;
-        }
+{% block content %}
+<div class="cadastro-container">
+    <h2 class="text-center mb-4">Gerenciamento de Usuários</h2>
 
-        /* Select2 responsivo */
-        .select2-container {
-            width: 100% !important;
-        }
-
-        /* Ajustes para cards */
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .cadastro-container {
-                margin: 10px;
-                padding: 10px;
-            }
-
-            .btn {
-                width: 100%;
-                margin-bottom: 5px;
-            }
-
-            .btn-group {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .btn-group .btn {
-                border-radius: 5px !important;
-                margin-bottom: 5px;
-            }
-
-            /* Ajustes para tabelas em telas pequenas */
-            .table-responsive table {
-                display: block;
-            }
-
-            .table-responsive table thead {
-                display: none;
-            }
-
-            .table-responsive table tbody tr {
-                display: block;
-                margin-bottom: 1rem;
-                border: 1px solid #dee2e6;
-                border-radius: 5px;
-                background-color: #fff;
-            }
-
-            .table-responsive table tbody td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.75rem;
-                border: none;
-                border-bottom: 1px solid #dee2e6;
-            }
-
-            .table-responsive table tbody td:last-child {
-                border-bottom: none;
-            }
-
-            .table-responsive table tbody td:before {
-                content: attr(data-label);
-                font-weight: bold;
-                margin-right: 1rem;
-            }
-        }
-
-        /* Ajustes para telas muito pequenas */
-        @media (max-width: 576px) {
-            .container {
-                padding-left: 10px;
-                padding-right: 10px;
-            }
-
-            h1, h2, h3, h4, h5 {
-                font-size: 1.2rem;
-            }
-
-            .navbar-brand {
-                font-size: 1.1rem;
-            }
-
-            /* Ajustes para inputs em telas pequenas */
-            input.form-control,
-            select.form-select {
-                font-size: 16px;
-                height: 44px;
-            }
-
-            /* Ajustes para modais em telas pequenas */
-            .modal-content {
-                border-radius: 10px;
-            }
-
-            .modal-body {
-                padding: 1rem;
-            }
-
-            .modal-footer {
-                flex-direction: column;
-                padding: 1rem;
-            }
-
-            .modal-footer .btn {
-                width: 100%;
-                margin: 0.25rem 0;
-            }
-        }
-
-        /* Animações e transições */
-        .btn {
-            transition: all 0.2s ease-in-out;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .card {
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Loading states */
-        .loading {
-            position: relative;
-            pointer-events: none;
-            opacity: 0.6;
-        }
-
-        .loading:after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 1rem;
-            height: 1rem;
-            margin: -0.5rem;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Estilos específicos da página */
-        .empresas-select {
-            min-height: 120px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .btn-group {
-                flex-direction: column;
-            }
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">Gerenciamento de Escalas - Veloci</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Registrar Diária</a>
-                    </li>
-                    {% if permissao == 'ADM' %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            Administração
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/cadastros">Cadastros</a></li>
-                            <li><a class="dropdown-item active" href="/cadastro_usuario">Usuários</a></li>
-                            <li><a class="dropdown-item" href="/logs">Logs</a></li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <span class="nav-link">Usuário: {{ session.username }}</span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout">Sair</a>
-                    </li>
-                </ul>
-            </div>
+    <!-- Formulário de Cadastro -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Novo Usuário</h5>
         </div>
-    </nav>
-
-    <div class="container">
-        <div class="cadastro-container">
-            <h2 class="text-center mb-4">Gerenciamento de Usuários</h2>
-            
-            <!-- Formulário de Cadastro -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Novo Usuário</h5>
-                </div>
-                <div class="card-body">
-                    {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                    {% endif %}
-                    <form method="POST" id="formCadastro">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="username" class="form-label">Usuário</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="senha" class="form-label">Senha</label>
-                                <input type="password" class="form-control" id="senha" name="senha" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="permissao" class="form-label">Permissão</label>
-                                <select class="form-select" id="permissao" name="permissao" required>
-                                    <option value="">Selecione uma permissão</option>
-                                    <option value="ADM">Administrador</option>
-                                    <option value="supervisor">Supervisor</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Empresas Vinculadas</label>
-                            <div class="d-flex gap-2 mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarTodasEmpresas()">Selecionar Todas</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoEmpresas()">Limpar Seleção</button>
-                            </div>
-                            <select class="form-select empresas-select" name="empresas_vinculadas[]" multiple>
-                                {% for empresa in empresas %}
-                                    <option value="{{ empresa }}">{{ empresa }}</option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted">Você pode digitar para buscar empresas específicas</small>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Cadastrar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Lista de Usuários -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Usuários Cadastrados</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th>
-                                    <th>Permissão</th>
-                                    <th>Empresas Vinculadas</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for usuario in usuarios %}
-                                <tr>
-                                    <td data-label="Usuário">{{ usuario.username }}</td>
-                                    <td data-label="Permissão">{{ usuario.permissao }}</td>
-                                    <td data-label="Empresas Vinculadas">
-                                        {% if usuario.permissao == 'supervisor' %}
-                                            {% if usuario.empresas_vinculadas %}
-                                                {{ usuario.empresas_vinculadas|join(', ') }}
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td data-label="Ações">
-                                        <button class="btn btn-sm btn-primary"
-                                            data-username="{{ usuario.username }}"
-                                            data-permissao="{{ usuario.permissao }}"
-                                            data-empresas="{{ usuario.empresas_vinculadas|default([])|tojson|safe }}"
-                                            onclick="editarUsuarioFromButton(this)">
-                                            Editar
-                                        </button>
-                                        {% if usuario.permissao != 'ADM' or usuarios|selectattr('permissao', 'equalto', 'ADM')|list|length > 1 %}
-                                        <button class="btn btn-sm btn-danger" onclick="excluirUsuario('{{ usuario.username }}')">
-                                            Excluir
-                                        </button>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        <div class="card-body">
+            {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            <form method="POST" id="formCadastro">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="username" class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="senha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="senha" name="senha" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="permissao" class="form-label">Permissão</label>
+                        <select class="form-select" id="permissao" name="permissao" required>
+                            <option value="">Selecione uma permissão</option>
+                            <option value="ADM">Administrador</option>
+                            <option value="supervisor">Supervisor</option>
+                        </select>
                     </div>
                 </div>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">Empresas Vinculadas</label>
+                    <div class="d-flex gap-2 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarTodasEmpresas()">Selecionar Todas</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoEmpresas()">Limpar Seleção</button>
+                    </div>
+                    <select class="form-select empresas-select" name="empresas_vinculadas[]" multiple>
+                        {% for empresa in empresas %}
+                        <option value="{{ empresa }}">{{ empresa }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Você pode digitar para buscar empresas específicas</small>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Modal de Edição -->
-    <div class="modal fade" id="modalEditar" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Usuário</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formEditar" method="POST">
-                        <div class="mb-3">
-                            <label for="edit_username" class="form-label">Usuário</label>
-                            <input type="text" class="form-control" id="edit_username" name="username" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_senha" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
-                            <input type="password" class="form-control" id="edit_senha" name="senha">
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_permissao" class="form-label">Permissão</label>
-                            <select class="form-select" id="edit_permissao" name="permissao" required>
-                                <option value="ADM">Administrador</option>
-                                <option value="supervisor">Supervisor</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Empresas Vinculadas</label>
-                            <div class="d-flex gap-2 mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarTodasEmpresasModal()">Selecionar Todas</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoEmpresasModal()">Limpar Seleção</button>
-                            </div>
-                            <select class="form-select empresas-select-modal" name="empresas_vinculadas[]" multiple>
-                                {% for empresa in empresas %}
-                                    <option value="{{ empresa }}">{{ empresa }}</option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted">Você pode digitar para buscar empresas específicas</small>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="salvarEdicao()">Salvar</button>
-                </div>
+    <!-- Lista de Usuários -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Usuários Cadastrados</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Permissão</th>
+                            <th>Empresas Vinculadas</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td data-label="Usuário">{{ usuario.username }}</td>
+                            <td data-label="Permissão">{{ usuario.permissao }}</td>
+                            <td data-label="Empresas Vinculadas">
+                                {% if usuario.permissao == 'supervisor' %}
+                                    {% if usuario.empresas_vinculadas %}{{ usuario.empresas_vinculadas|join:", " }}{% else %}-{% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td data-label="Ações">
+                                <button class="btn btn-sm btn-primary"
+                                    data-username="{{ usuario.username }}"
+                                    data-permissao="{{ usuario.permissao }}"
+                                    data-empresas="{{ usuario.empresas_vinculadas_json|escape }}"
+                                    onclick="editarUsuarioFromButton(this)">
+                                    Editar
+                                </button>
+                                {% if usuario.can_excluir %}
+                                <button class="btn btn-sm btn-danger" onclick="excluirUsuario('{{ usuario.username|escapejs }}')">
+                                    Excluir
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Adiciona jQuery (necessário para o Select2) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Adiciona Select2 -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        let modalEditar;
+<!-- Modal de Edição -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditar" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="edit_username" class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="edit_username" name="username" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_senha" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                        <input type="password" class="form-control" id="edit_senha" name="senha">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_permissao" class="form-label">Permissão</label>
+                        <select class="form-select" id="edit_permissao" name="permissao" required>
+                            <option value="ADM">Administrador</option>
+                            <option value="supervisor">Supervisor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Empresas Vinculadas</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarTodasEmpresasModal()">Selecionar Todas</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoEmpresasModal()">Limpar Seleção</button>
+                        </div>
+                        <select class="form-select empresas-select-modal" name="empresas_vinculadas[]" multiple>
+                            {% for empresa in empresas %}
+                            <option value="{{ empresa }}">{{ empresa }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Você pode digitar para buscar empresas específicas</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarEdicao()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        document.addEventListener('DOMContentLoaded', function() {
-            modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
-
-            // Inicializa o Select2 para o formulário de cadastro
-            $('.empresas-select').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Selecione as empresas',
-                allowClear: true,
-                language: {
-                    noResults: function() {
-                        return "Nenhuma empresa encontrada";
-                    }
-                }
-            });
-
-            // Inicializa o Select2 para o modal de edição
-            $('.empresas-select-modal').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Selecione as empresas',
-                allowClear: true,
-                dropdownParent: $('#modalEditar'),
-                language: {
-                    noResults: function() {
-                        return "Nenhuma empresa encontrada";
-                    }
-                }
-            });
-
-            // Formulário de cadastro
-            const formCadastro = document.getElementById('formCadastro');
-            if (formCadastro) {
-                formCadastro.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const formData = new FormData(formCadastro);
-                    
-                    fetch('/cadastro_usuario', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.error || 'Erro ao cadastrar usuário');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        alert('Erro ao cadastrar usuário');
-                    });
-                });
-            }
-        });
-
-        function selecionarTodasEmpresas() {
-            const empresasSelect = $('.empresas-select');
-            const todasOpcoes = [];
-            empresasSelect.find('option').each(function() {
-                todasOpcoes.push($(this).val());
-            });
-            empresasSelect.val(todasOpcoes).trigger('change');
-        }
-
-        function limparSelecaoEmpresas() {
-            $('.empresas-select').val(null).trigger('change');
-        }
-
-        function selecionarTodasEmpresasModal() {
-            const empresasSelect = $('.empresas-select-modal');
-            const todasOpcoes = [];
-            empresasSelect.find('option').each(function() {
-                todasOpcoes.push($(this).val());
-            });
-            empresasSelect.val(todasOpcoes).trigger('change');
-        }
-
-        function limparSelecaoEmpresasModal() {
-            $('.empresas-select-modal').val(null).trigger('change');
-        }
-
-        function editarUsuarioFromButton(button) {
-            const username = button.dataset.username;
-            const permissao = button.dataset.permissao;
-            let empresas = [];
-            
-            try {
-                empresas = JSON.parse(button.dataset.empresas || '[]');
-            } catch (e) {
-                console.error('Erro ao processar empresas:', e);
-            }
-            
-            // Preenche os campos do modal
-            document.querySelector('#edit_username').value = username;
-            document.querySelector('#edit_senha').value = '';
-            document.querySelector('#edit_permissao').value = permissao;
-            
-            // Seleciona as empresas vinculadas no Select2 do modal
-            $('.empresas-select-modal').val(empresas).trigger('change');
-            
-            // Abre o modal
-            modalEditar.show();
-        }
-
-        function salvarEdicao() {
-            const form = document.getElementById('formEditar');
-            const formData = new FormData(form);
-            
-            fetch('/editar_usuario', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || 'Erro ao editar usuário');
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao editar usuário');
-            });
-        }
-
-        function excluirUsuario(username) {
-            if (confirm('Tem certeza que deseja excluir este usuário?')) {
-                fetch('/excluir_usuario', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username: username })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.error || 'Erro ao excluir usuário');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    alert('Erro ao excluir usuário');
-                });
-            }
-        }
-    </script>
-</body>
-</html> 
+{% block extra_js %}
+<script src="{% static 'js/cadastro_usuario.js' %}"></script>
+{% endblock %}

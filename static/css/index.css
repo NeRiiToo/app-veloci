@@ -1,0 +1,203 @@
+/* Notificações de alerta flutuante */
+.alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.alert {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-bottom: 10px;
+    padding: 15px 20px;
+    position: relative;
+    pointer-events: auto;
+    animation: slideIn 0.3s ease-out;
+    border-left: 4px solid;
+}
+
+.alert-danger { border-left-color: #dc3545; }
+.alert-success { border-left-color: #28a745; }
+.alert-warning { border-left-color: #ffc107; }
+.alert-info { border-left-color: #17a2b8; }
+
+.alert .close {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    padding: 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    opacity: 0.7;
+}
+
+.alert .close:hover { opacity: 1; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.alert.hiding { animation: slideOut 0.3s ease-in forwards; }
+
+/* Layout */
+body { padding-bottom: 20px; }
+
+.select2-container { width: 100% !important; }
+.select2-selection { height: 38px !important; padding: 5px !important; }
+.select2-selection__arrow { height: 36px !important; }
+
+.diaria-card {
+    background: linear-gradient(135deg, var(--white-color), #f8f9fa);
+    border: 1px solid rgba(255, 75, 43, 0.1);
+}
+
+.diaria-card:hover { border-color: var(--primary-color); }
+
+.filters {
+    background: var(--white-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.table th { white-space: nowrap; }
+
+/* Tabela de diárias */
+.table-striped > tbody > tr {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #f8f9fa;
+    border-left: 4px solid #e9ecef;
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+    background-color: #ffffff;
+    border-left: 4px solid #dee2e6;
+}
+
+.table-striped > tbody > tr:hover {
+    background-color: #f0f7ff;
+    border-left: 4px solid var(--primary-color);
+    transform: translateX(2px);
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-align: left;
+    border-bottom: none;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.95rem;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table td[data-label="Data e Hora de Início"],
+.table td[data-label="Data e Hora de Fim"] {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.table td[data-label="Empresa"] {
+    font-weight: 600;
+    color: #2C5282;
+}
+
+.table td[data-label="Entregador"] {
+    font-weight: 500;
+    color: #4A5568;
+}
+
+.table td[data-label="Taxa Total Cobrada"],
+.table td[data-label="Taxa Total Entregador"] {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+    color: #2D3748;
+}
+
+.table td[data-label="Mínimo Garantido"] {
+    position: relative;
+}
+
+.table td[data-label="Mínimo Garantido"]::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.table td[data-label="Mínimo Garantido"]:contains('Sim')::before {
+    background-color: #48BB78;
+}
+
+.table td[data-label="Mínimo Garantido"]:contains('Não')::before {
+    background-color: #F56565;
+}
+
+.card.mb-3 {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    background: linear-gradient(to right, #ffffff, #f8f9fa);
+}
+
+.card.mb-3 .card-body {
+    padding: 1.5rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .container { padding-left: 10px; padding-right: 10px; }
+    .card-body { padding: 15px; }
+    .btn { width: 100%; margin-bottom: 5px; }
+    .btn-group { flex-direction: column; }
+    .btn-group .btn { border-radius: 5px !important; margin-bottom: 5px; }
+    .filters .row > div { margin-bottom: 10px; }
+    .table-responsive { padding: 0.5rem; }
+    .card.mb-3 .card-body { padding: 1rem; }
+    .table td { padding: 0.75rem; font-size: 0.9rem; }
+    .table td[data-label]::before { color: #718096; font-weight: 600; margin-bottom: 0.25rem; }
+}
+
+@media (max-width: 576px) {
+    h1, h2, h3, h4, h5 { font-size: 1.2rem; margin-bottom: 15px; }
+    .navbar-brand { font-size: 1.1rem; }
+    input.form-control, select.form-select { font-size: 16px; height: 44px; }
+    .modal-content { border-radius: 10px; }
+    .modal-body { padding: 1rem; }
+    .modal-footer { flex-direction: column; padding: 1rem; }
+    .modal-footer .btn { width: 100%; margin: 0.25rem 0; }
+    input[type="datetime-local"] { font-size: 14px; }
+}
