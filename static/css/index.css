@@ -193,8 +193,8 @@ body { padding-bottom: 20px; }
 
 @media (max-width: 576px) {
     h1, h2, h3, h4, h5 { font-size: 1.2rem; margin-bottom: 15px; }
-    .navbar-brand { font-size: 1.1rem; }
-    input.form-control, select.form-select { font-size: 16px; height: 44px; }
+    .navbar-brand { font-size: 0.8rem; }
+    input.form-control, select.form-select { font-size: 16px; height: 100%; }
     .modal-content { border-radius: 10px; }
     .modal-body { padding: 1rem; }
     .modal-footer { flex-direction: column; padding: 1rem; }

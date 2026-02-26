@@ -432,6 +432,42 @@ input[type="datetime-local"] {
     overflow-y: auto;
 }
 
+.adm{
+    background-color: var(--light-color);
+    border-radius: 5px;
+}
+
+.adm a {
+    display: block;
+    color: var(--secondary-color);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.navbar .dropdown-menu.show {
+    overflow: hidden;
+    animation: dropdownOpen 1s ease forwards;
+}
+
+.navbar .dropdown-menu.closing {
+    display: block !important;
+    overflow: hidden;
+    animation: dropdownClose 1s ease forwards;
+}
+
+@keyframes dropdownOpen {
+    from { max-height: 0; opacity: 0; }
+    to   { max-height: 300px; opacity: 1; }
+}
+
+@keyframes dropdownClose {
+    from { max-height: 300px; opacity: 1; }
+    to   { max-height: 0; opacity: 0; }
+}
+
 /* Ajustes para elementos fixos */
 .sticky-top {
     z-index: 1020;

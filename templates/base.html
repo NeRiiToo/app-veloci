@@ -33,15 +33,17 @@
                         <a class="nav-link" href="/">Registrar Diaria</a>
                     </li>
                     {% if permissao == 'ADM' %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Administracao
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle" href="#adminCollapse" data-bs-toggle="collapse" aria-expanded="false" aria-controls="adminCollapse">
+                            Administração
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item {% block nav_cadastros %}{% endblock %}" href="/cadastros">Cadastros</a></li>
-                            <li><a class="dropdown-item {% block nav_usuarios %}{% endblock %}" href="/cadastro_usuario">Usuarios</a></li>
-                            <li><a class="dropdown-item {% block nav_logs %}{% endblock %}" href="/logs">Logs</a></li>
-                        </ul>
+                        <div class="adm collapse" id="adminCollapse">
+                            <ul class="nav flex-column ps-2">
+                                <li class="adm nav-item"><a class="{% block nav_cadastros %}{% endblock %}" href="/cadastros">Cadastros</a></li>
+                                <li class="adm nav-item"><a class="{% block nav_usuarios %}{% endblock %}" href="/cadastro_usuario">Usuarios</a></li>
+                                <li class="adm nav-item"><a class="{% block nav_logs %}{% endblock %}" href="/logs">Logs</a></li>
+                            </ul>
+                        </div>
                     </li>
                     {% endif %}
                 </ul>
