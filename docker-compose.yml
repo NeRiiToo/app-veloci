@@ -1,14 +1,19 @@
 services:
   db:
-    image: postgres:16
+    image: postgres:latest
     environment:
       POSTGRES_DB: veloci
       POSTGRES_USER: veloci
       POSTGRES_PASSWORD: veloci_secret
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veloci -d veloci"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   web:
     build: .
@@ -19,7 +24,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgres://veloci:veloci_secret@db:5432/veloci
       - DJANGO_SECRET_KEY=insecure-dev-key-change-in-production
